@@ -1,11 +1,11 @@
 import React from 'react';
 
 interface ButtonProps {
-    variant?:'primary'| 'accent',
+    variant?:'primary'| 'accent' | 'searchPrimary' | 'searchAccent',
     onClick?: () => void,
     disabled?: boolean,
     type?: 'button' | 'submit' | 'reset',
-    children?: string,
+    children?: React.ReactNode,
 }
 
 
@@ -16,14 +16,16 @@ const Button:React.FC<ButtonProps> = ({
     type='submit',
     children='Кнопка'}) => {
     const variants={
-        primary: 'bg-gray text-black',
-        accent: 'bg-accent text-white',
+        primary: 'bg-gray text-black rounded-12 py-22 px-20',
+        accent: 'bg-accent text-white rounded-12 py-22 px-20',
+        searchPrimary: 'bg-transparent text-black py-12 px-16',
+        searchAccent: 'bg-accent rounded-12 text-white py-12 px-16',
     };
     return (
         <button type={type}
         onClick={onClick}
         disabled={disabled}
-        className={`rounded-12 py-22 px-20 ${variants[variant]}`}>
+        className={variants[variant]}>
             {children}
         </button>
     );

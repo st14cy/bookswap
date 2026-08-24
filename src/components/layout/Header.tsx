@@ -4,7 +4,6 @@ import Link from "../common/Link.tsx";
 const Header: React.FC = () => {
     return (
         <header className='h-header relative'>
-
             <div className='max-w-7xl mx-auto flex justify-between items-center w-full px-4'>
                 <div className="flex items-center">
                     <img alt="Иконка" src="/icon.png"/>
@@ -34,10 +33,8 @@ const Header: React.FC = () => {
                     </div>
                     <img alt="Пользователь" width='90' height='90' className='bg-gray rounded-full' />
                 </div>
-
             </div>
             <div className='bg-background-dark h-24 absolute bottom-0 left-0 w-full z-[-2]'></div>
-
         </header>
     )
 }
