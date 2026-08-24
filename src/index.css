@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: "Evolventa";
+    font-style: normal;
+    font-weight: 400;
+    src: url("/src/assets/fonts/Evolventa-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Evolventa";
+    font-style: normal;
+    font-weight: 700;
+    src: url("/src/assets/fonts/Evolventa-Bold.ttf") format("truetype");
+}
+
 
 @theme{
     --color-background: #ffffff;
@@ -12,4 +26,9 @@
 
     --spacing-22: 22px;
     --spacing-20: 20px;
+
+    --font-family:  "Evolventa", sans-serif;
+}
+body {
+    font-family: "Evolventa", sans-serif;
 }
