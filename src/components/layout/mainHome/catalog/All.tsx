@@ -3,11 +3,17 @@ import CatalogItem from "../../../common/Catalog/CatalogItem.tsx";
 
 const All: React.FC = () => {
     return (
-        <ul>
-            <CatalogItem></CatalogItem>
-            <CatalogItem></CatalogItem>
-            <CatalogItem></CatalogItem>
-        </ul>
+        <div>
+            <h1>
+                Все объявления
+            </h1>
+            <ul>
+                <CatalogItem></CatalogItem>
+                <CatalogItem></CatalogItem>
+                <CatalogItem></CatalogItem>
+            </ul>
+        </div>
+
     );
 };
 

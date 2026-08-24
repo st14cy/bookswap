@@ -3,11 +3,15 @@ import CatalogItem from "../../../common/Catalog/CatalogItem.tsx";
 
 const Nearby: React.FC=() => {
     return (
-        <ul>
-            <CatalogItem></CatalogItem>
-            <CatalogItem></CatalogItem>
-            <CatalogItem></CatalogItem>
-        </ul>
+        <div>
+            <h1>Рядом с вами</h1>
+            <ul>
+                <CatalogItem></CatalogItem>
+                <CatalogItem></CatalogItem>
+                <CatalogItem></CatalogItem>
+            </ul>
+        </div>
+
     );
 };
 

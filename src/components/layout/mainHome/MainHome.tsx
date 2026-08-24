@@ -6,9 +6,7 @@ import MainCatalog from "./catalog/MainCatalog.tsx";
 const MainHome : React.FC=()=>{
     return (
         <main>
-            /* Контролы взаимодействия с каталогом */
             <CatalogControls></CatalogControls>
-            /* Основной каталог */
             <MainCatalog></MainCatalog>
         </main>
     )

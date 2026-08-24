@@ -4,10 +4,10 @@ import All from "./All.tsx";
 
 const MainCatalog: React.FC=()=>{
     return (
-        <div className='flex flex-col'>
+        <section className='flex flex-col'>
             <Nearby></Nearby>
             <All></All>
-        </div>
+        </section>
     )
 }
 

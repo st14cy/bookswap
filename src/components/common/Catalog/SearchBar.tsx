@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "../Button.tsx";
 
 const  SearchBar: React.FC = ()=>{
     return (
@@ -8,9 +9,9 @@ const  SearchBar: React.FC = ()=>{
             </label>
             <input name="search" id="search" type="text" placeholder="Поиск"/>
 
-            <button type="submit">Поиск</button>
-            <button>На карте</button>
-            <button>Все фильтры</button>
+            <Button variant="accent">Поиск</Button>
+            <Button variant="primary">На карте</Button>
+            <Button variant="primary">Все фильтры</Button>
         </form>
     )
 }
