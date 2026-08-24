@@ -1,14 +1,15 @@
 import React from 'react';
-import CatalogControls from "./catalog/CatalogControls.tsx";
+import CatalogControls from "../../common/Catalog/CatalogControls.tsx";
+import MainCatalog from "./catalog/MainCatalog.tsx";
 
 
 const MainHome : React.FC=()=>{
     return (
         <main>
+            /* Контролы взаимодействия с каталогом */
             <CatalogControls></CatalogControls>
-            <section>
-
-            </section>
+            /* Основной каталог */
+            <MainCatalog></MainCatalog>
         </main>
     )
 }

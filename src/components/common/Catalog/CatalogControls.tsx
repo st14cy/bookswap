@@ -1,5 +1,5 @@
 import  React from 'react';
-import SearchBar from "../../../common/SearchBar.tsx";
+import SearchBar from "./SearchBar.tsx";
 
 const  CatalogControls : React.FC = ()=>{
     return (
