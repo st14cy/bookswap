@@ -23,7 +23,7 @@ const Button:React.FC<ButtonProps> = ({
         <button type={type}
         onClick={onClick}
         disabled={disabled}
-        className={`btn rounded-12 py-22 px-20 ${variants[variant]}`}>
+        className={`rounded-12 py-22 px-20 ${variants[variant]}`}>
             {children}
         </button>
     );

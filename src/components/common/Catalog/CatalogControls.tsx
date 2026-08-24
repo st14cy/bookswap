@@ -3,12 +3,14 @@ import SearchBar from "./SearchBar.tsx";
 
 const  CatalogControls : React.FC = ()=>{
     return (
-        <section className='grid grid-cols-[1fr_220px] bg-background-dark'>
-            <SearchBar />
-            <span className='flex'>
-        <img alt="Иконка навигации" />
-        Россия, Челябинск
-    </span>
+        <section className=' bg-background-dark'>
+            <div className='grid grid-cols-[1fr_220px] max-w-7xl mx-auto'>
+                <SearchBar></SearchBar>
+                <span className='flex'>
+                <img alt="Иконка навигации"/>
+                Россия, Челябинск
+                </span>
+            </div>
         </section>
     )
 }
