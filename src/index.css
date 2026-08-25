@@ -19,6 +19,80 @@
     --color-background: #ffffff;
     --color-background-dark: #212121;
     --color-accent: #A23032;
+    --color-accent-6: rgba(162, 48, 50, 0.6);
+    --color-black: #000000;
+    --color-gray: #D9D9D9;
+
+    --radius-12: 12px;
+    --radius-20: 20px;
+
+    --spacing-20: 20px;
+    --spacing-22: 22px;
+    --spacing-36: 36px;
+    --spacing-12: 12px;
+    --spacing-16: 16px;
+
+
+    --gap-4: 4px;
+    --gap-6: 6px;
+    --gap-10: 10px;
+    --gap-40: 40px;
+    --gap-60: 60px;
+
+    --font-family:  "Evolventa", sans-serif;
+    --font-size-16: 16px;
+
+
+    --height-header: 88px;
+    --height-24:24px;
+    --height-46:46px;
+
+    --width-46:46px;
+
+}
+body {
+    font-family: "Evolventa", sans-serif;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+@layer base {
+    input[type="checkbox"] {
+        @apply appearance-none;
+        -webkit-appearance: none;
+    }
+}
+
+
+@font-face {
+    font-family: "Evolventa";
+    font-style: normal;
+    font-weight: 400;
+    src: url("/src/assets/fonts/Evolventa-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Evolventa";
+    font-style: normal;
+    font-weight: 700;
+    src: url("/src/assets/fonts/Evolventa-Bold.ttf") format("truetype");
+}
+
+
+@theme{
+    --color-background: #ffffff;
+    --color-background-dark: #212121;
+    --color-accent: #A23032;
     --color-black: #000000;
     --color-gray: #D9D9D9;
 

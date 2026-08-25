@@ -7,10 +7,14 @@ const All: React.FC = () => {
             <h1>
                 Все объявления
             </h1>
-            <ul>
+            <ul className="flex flex-сol gap-60">
                 <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
+                <CatalogItem></CatalogItem>
+                <CatalogItem></CatalogItem>
+                <CatalogItem></CatalogItem>
+
             </ul>
         </div>
 

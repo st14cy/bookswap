@@ -5,7 +5,8 @@ const Nearby: React.FC=() => {
     return (
         <div>
             <h1>Рядом с вами</h1>
-            <ul>
+            <ul className="flex flex-row gap-60">
+                <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
