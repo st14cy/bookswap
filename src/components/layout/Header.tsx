@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from "../common/Link.tsx";
+import Typography from "../common/Typography.tsx";
 
 const Header: React.FC = () => {
     return (
@@ -7,12 +8,7 @@ const Header: React.FC = () => {
             <div className='max-w-7xl mx-auto flex justify-between items-center w-full px-4'>
                 <div className="flex items-center">
                     <img alt="Иконка" src="/icon.png"/>
-                    <nav>
-                        <ul className="flex flex-wrap items-center justify-center gap-4">
-                            <li className="cursor-pointer">Каталог</li>
-                            <li className="cursor-pointer">О нас</li>
-                        </ul>
-                    </nav>
+                    <Typography variant='h1'>Каталог</Typography>
                 </div>
                 <div className="flex items-center gap-40">
                     <div className="flex gap-40">

@@ -6,6 +6,7 @@ import Input from "../Input.tsx";
 const SearchBar: React.FC = () => {
     return (
         <form className='bg-gray rounded-12 mt-4 py-12'>
+            <label htmlFor='search' className='visually-hidden'></label>
             <Input style='search' name='search' id='search' type='text' placeholder='Поиск'/>
             <Button variant='searchAccent'>
                 <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
