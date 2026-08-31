@@ -4,20 +4,18 @@ import CatalogItem from "../../../common/Catalog/CatalogItem.tsx";
 const All: React.FC = () => {
     return (
         <div>
-            <h1>
-                Все объявления
-            </h1>
-            <ul className="flex flex-сol gap-60">
+            <h1>Рядом с вами</h1>
+            <div className="max-w-7xl overflow-x-auto scroll-smooth">
+                <div className="flex flex-row gap-60 pb-4">
                 <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
                 <CatalogItem></CatalogItem>
-
-            </ul>
+                </div>
+            </div>
         </div>
-
     );
 };
 
