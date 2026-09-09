@@ -1,5 +1,5 @@
 import React from 'react';
-import LikeControl from "./LikeControl.tsx";
+import LikeControl from "../../../shared/ui/LikeControl.tsx";
 
 
 interface CatalogItemProps {

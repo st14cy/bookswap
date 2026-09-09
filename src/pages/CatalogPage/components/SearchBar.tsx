@@ -1,6 +1,6 @@
 import React from "react";
-import Button from "../Button.tsx";
-import Input from "../Input.tsx";
+import Button from "../../../shared/ui/Button.tsx";
+import Input from "../../../shared/ui/Input.tsx";
 
 
 const SearchBar: React.FC = () => {
