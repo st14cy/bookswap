@@ -2,13 +2,13 @@ import React from 'react';
 import LikeControl from "../../../shared/ui/LikeControl.tsx";
 
 
-interface CatalogItemProps {
+interface ICatalogItemProps {
     name?: string;
     author?:string;
     location?:string;
 }
 
-const CatalogItem: React.FC<CatalogItemProps>=({
+const CatalogItem: React.FC<ICatalogItemProps>=({
     name='Название',
     author='Автор',
     location='Неизвестно',})=>{
