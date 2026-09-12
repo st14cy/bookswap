@@ -1,16 +1,8 @@
-import React, {useState} from 'react';
+
 import Typography from "../../shared/ui/Typography.tsx";
 
-const tabs = [
-    { id: 'published', label: 'Опубликованные' },
-    { id: 'unpublished', label: 'Снятые с публикации' },
-    { id: 'drafts', label: 'Черновики' },
-] as const;
-
-type TabId = (typeof tabs)[number]['id'];
-
 const UserProductList: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<TabId>('published');
+
     return (
         <div className="flex flex-col gap-6">
             <header className="flex flex-col items-center gap-3">
