@@ -4,11 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, matchPath } from 'react-router-dom';
 import Typography from "../shared/ui/Typography.tsx";
 import { ROUTES } from "../shared/config/routes.ts";
-import {useNavigate} from "react-router-dom";
 
 
 const Header: React.FC = () => {
-    const navigate = useNavigate();
     const location = useLocation();
     const [pageTitle, setPageTitle] = useState('Каталог');
 
@@ -34,8 +32,8 @@ const Header: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-40">
                     <div className="flex gap-40">
-                        <Link to="/newProduct">+ разместить объявление</Link>
-                        <Link to="/">мои объявления</Link>
+                        <Link to="/additem">+ разместить объявление</Link>
+                        <Link to="/profile">мои объявления</Link>
                     </div>
                     <div className="flex items-center gap-20">
                         <Link to="/favorites">

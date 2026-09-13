@@ -2,10 +2,20 @@ import React from 'react';
 import Button from "../../../shared/ui/Button.tsx";
 import Typography from "../../../shared/ui/Typography.tsx";
 
+//interface IUserProduct {
+//    name: string;
+//    imageSrc: string;
+//    author:string;
+//    location?:string;
+//    likeCount?:number;
+//    viewCount?:number;
+//
+//}
+
 interface IUserProduct {
-    name: string;
-    imageSrc: string;
-    author:string;
+    name?: string;
+    imageSrc?: string;
+    author?:string;
     location?:string;
     likeCount?:number;
     viewCount?:number;
@@ -21,9 +31,8 @@ const UserProductItem:React.FC<IUserProduct> = ({
     return (
     <li>
         <img src={imageSrc}
-             width={250}
-             height={250}
-             className="aspect-square w-full object-contain"
+             width='250'
+             height='250'
              alt={`Обложка книги «${name}»`} />
 
         <div className="grid grid-cols-2 grid-rows-2">

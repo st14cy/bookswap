@@ -1,5 +1,6 @@
 
 import Typography from "../../shared/ui/Typography.tsx";
+import UserProductItem from "./components/UserProductItem.tsx";
 
 const UserProductList: React.FC = () => {
 
@@ -28,20 +29,24 @@ const UserProductList: React.FC = () => {
 
             <div className="tab">
                 <input checked id="tab-btn-1" name="tab-btn" type="radio" value=""/>
-                <label htmlFor="tab-btn-1">Вкладка 1</label>
+                <label htmlFor="tab-btn-1">Активные</label>
                 <input id="tab-btn-2" name="tab-btn" type="radio" value=""/>
-                <label htmlFor="tab-btn-2">Вкладка 2</label>
-                <input id="tab-btn-3" name="tab-btn" type="radio" value=""/>
-                <label htmlFor="tab-btn-3">Вкладка 3</label>
+                <label htmlFor="tab-btn-2">Архив</label>
                 <div className="tab-content" id="content-1">
-                    Содержимое 1...
+                   <ul>
+                       <UserProductItem/>
+                       <UserProductItem/>
+                       <UserProductItem/>
+                       <UserProductItem/>
+                   </ul>
                 </div>
                 <div className="tab-content" id="content-2">
-                    Содержимое 2...
+                    <UserProductItem/>
+                    <UserProductItem/>
+                    <UserProductItem/>
+                    <UserProductItem/>
                 </div>
-                <div className="tab-content" id="content-3">
-                    Содержимое 3...
-                </div>
+
             </div>
         </div>
     );
