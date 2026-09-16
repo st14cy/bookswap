@@ -1,28 +1,31 @@
 import React from 'react';
 import LikeControl from "../../../shared/ui/LikeControl.tsx";
+import {Link} from "react-router-dom";
 
 
 interface ICatalogItemProps {
+    id: string;
     name?: string;
     author?:string;
     location?:string;
 }
 
 const CatalogItem: React.FC<ICatalogItemProps>=({
+    id,
     name='Название',
     author='Автор',
     location='Неизвестно',})=>{
     return (
       <li>
           <article className="relative">
-              <a>
+              <Link to={`/product/${id}`}>
                  <img src='#' width='260' height='250' className='bg-gray rounded-20'  alt='Изображение книги'/>
-              </a>
+              </Link>
 
               <div>
                <LikeControl />
               </div>
-              <a className='flex flex-col gap-4 items-center' href='#'>
+              <Link className='flex flex-col gap-4 items-center' to={`/product/${id}`}>
                   <h3 className='flex flex-row gap-10'>
                       <span>
                         {name}
@@ -38,10 +41,9 @@ const CatalogItem: React.FC<ICatalogItemProps>=({
                       </svg>
                       {location}
                   </span>
-              </a>
+              </Link>
           </article>
       </li>
     )
 }
 export default CatalogItem;
-

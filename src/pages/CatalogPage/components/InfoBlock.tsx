@@ -7,10 +7,10 @@ interface InfoBlockProps {
 }
 
 const InfoBlock: React.FC<InfoBlockProps> = ({ title, children }) => (
-    <div className='flex flex-col gap-24'>
-        <Typography variant='label' weight='bold'>{title}</Typography>
+    <li className='flex flex-row gap-24 '>
+        <Typography variant='label'>{title}</Typography>
         {children}
-    </div>
+    </li>
 );
 
 export default InfoBlock;

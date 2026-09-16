@@ -50,7 +50,7 @@ const Header: React.FC = () => {
                     <img alt="Пользователь" width='90' height='90' className='bg-gray rounded-full' />
                 </div>
             </div>
-            <div className='bg-background-dark h-24 absolute bottom-0 left-0 w-full z-[-2]'></div>
+
         </header>
     );
 };

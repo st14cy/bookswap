@@ -4,6 +4,7 @@ import CatalogPage from "../../pages/CatalogPage/CatalogPage.tsx";
 import SellerProfile from "../../pages/ProductCard/components/SellerProfile.tsx";
 import AddProductPage from "../../pages/AddProductPage/AddProductPage.tsx";
 import UserProductList from "../../pages/UserProductList/UserProductList.tsx";
+import ProductCard from "../../pages/ProductCard/ProductCard.tsx";
 
 export const ROUTES = {
     mainCatalog: {
@@ -25,6 +26,11 @@ export const ROUTES = {
         path: '/profile',
         component: UserProductList,
         title: 'Мои объявления',
+    },
+    product: {
+        path: '/product/:productId',
+        component: ProductCard,
+        title: 'Информация о товаре',
     },
 } as const;
 

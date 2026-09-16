@@ -20,7 +20,7 @@ const Button:React.FC<ButtonProps> = ({
         accent: 'bg-accent text-white rounded-12 py-22 px-20',
         searchPrimary: 'bg-transparent text-black py-12 px-16',
         searchAccent: 'bg-accent rounded-12 text-white py-12 px-16',
-        subscribe: 'bg-transparent text-blue  px-16',
+        subscribe: 'bg-transparent text-blue',
     };
     return (
         <button type={type}

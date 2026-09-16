@@ -50,7 +50,13 @@ const Nearby: React.FC=() => {
             <div className="max-w-7xl overflow-x-auto scroll-smooth">
                 <ul className="flex flex-row gap-60 pb-4">
                     {products.map((product) => (
-                        <CatalogItem name={product.bookTitle} author={product.authorName} location={product.city} />
+                        <CatalogItem
+                            key={product.id}
+                            id={product.id}
+                            name={product.bookTitle}
+                            author={product.authorName}
+                            location={product.city}
+                        />
                     ))}
                 </ul>
             </div>
