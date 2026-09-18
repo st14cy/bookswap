@@ -2,7 +2,8 @@ import React from 'react';
 import {useEffect, useState} from 'react';
 import CatalogItem from "../CatalogItem.tsx";
 import Typography from '../../../../shared/ui/Typography.tsx';
-import {getAllProducts, type Product} from "../../../../api/product.ts";
+import {getAllProducts} from "../../../../api/product.ts";
+import type {Product} from "../../../../api/types/advertisement.ts";
 
 const All: React.FC = () => {
     const [products, setProducts] = useState<Product[]>([]);

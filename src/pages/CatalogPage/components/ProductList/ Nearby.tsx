@@ -1,8 +1,8 @@
 import CatalogItem from "../CatalogItem.tsx";
 import Typography from "../../../../shared/ui/Typography.tsx";
 import { getAllProducts } from "../../../../api/product.ts";
-import type {Product} from "../../../../api/product.ts";
 import React, {useEffect, useState} from 'react';
+import type {Product} from "../../../../api/types/advertisement.ts";
 
 const Nearby: React.FC=() => {
 

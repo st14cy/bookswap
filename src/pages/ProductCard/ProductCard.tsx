@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from "react";
 import {useParams} from "react-router-dom";
-import {getProductById, type Product} from "../../api/product.ts";
+import {getProductById} from "../../api/product.ts";
 import SellerProfile from "./components/SellerProfile.tsx";
 import LikeControl from "../../shared/ui/LikeControl.tsx";
 import Typography from "../../shared/ui/Typography.tsx";
 import InfoBlock from "../CatalogPage/components/InfoBlock.tsx";
 import Button from "../../shared/ui/Button.tsx";
+import type {Product} from "../../api/types/advertisement.ts";
 
 const ProductCard: React.FC = () => {
     const {productId} = useParams<{productId: string}>();
