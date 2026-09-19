@@ -1,0 +1,75 @@
+import React, {useEffect, useState} from 'react';
+import LikeControl from "../../../shared/ui/LikeControl.tsx";
+import type PostDetailViewModelImpl from "../../view-model/post/get-by-id/PostDetailViewModelImpl.tsx";
+import type BaseView from "../BaseView.tsx";
+import Typography from "../../../shared/ui/Typography.tsx";
+import InfoBlock from "../../../pages/PostListPage/components/InfoBlock.tsx";
+import Button from "../../../shared/ui/Button.tsx";
+import SellerProfile from "../../../pages/PostDetailsPage/components/SellerProfile.tsx";
+
+interface Props {
+    viewModel: PostDetailViewModelImpl;
+    postId: string;
+}
+
+
+const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
+    const [, forceUpdate] = useState(0);
+
+    const baseView: BaseView = {
+        onViewModelChanged: () => forceUpdate((n) => n + 1),
+    };
+
+    useEffect(() => {
+        viewModel.attachView(baseView);
+        viewModel.onLoadPost(postId);
+        return () => viewModel.detachView();
+    }, [postId]);
+
+    if (viewModel.isLoading) return <div>Загрузка поста...</div>;
+    if (viewModel.isShowError) return <div style={{ color: 'red' }}>{viewModel.errorMessage}</div>;
+    if (!viewModel.post) return <div>Пост не найден</div>;
+    return (
+        <div className="grid grid-cols-2 gap-100">
+            <div className="flex flex-col gap-[24px]">
+                <section className="relative">
+                    <img src="#" alt={`Фотография ${viewModel.post.bookTitle}`} width="550" height="480"/>
+                    <LikeControl/>
+                </section>
+                <div className="flex flex-col gap-14">
+                    <Typography variant='h3'
+                                weight="bold">Описание</Typography>
+                    <Typography variant='span'>{viewModel.post.description}</Typography>
+                </div>
+                <div className="flex flex-col gap-14">
+                    <Typography variant='h3'
+                                weight="bold">Характеристика</Typography>
+                    <ul className="flex flex-col gap-14">
+                        <InfoBlock title="Автор" children={viewModel.post.authorName}/>
+                        <InfoBlock title="Жанр" children={viewModel.post.genreId}/>
+                    </ul>
+                </div>
+
+                <div className="flex flex-col gap-14">
+                    <Typography variant='h3'
+                                weight="bold">Местоположение</Typography>
+                    <Typography variant='span'>{`${viewModel.post.city},${viewModel.post.street}, ${viewModel.post.houseNumber}`}</Typography>
+
+
+                </div>
+                <div>
+                    <Typography variant='span'>{`${viewModel.post.id},${viewModel.post.startDate}, ${viewModel.post.viewsCount} просмотра`}</Typography>
+                </div>
+
+            </div>
+            <div className="flex flex-col gap-14 max-w-[380px]">
+                <Button  variant='accent'>Забрать книгу</Button>
+                <SellerProfile/>
+                <Button variant='primary'>Написать</Button>
+            </div>
+
+        </div>
+    );
+};
+
+export default PostDetailComponent;

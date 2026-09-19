@@ -1,11 +1,12 @@
 import type PostListViewModel from "./PostListViewModel.tsx";
-import type {Post} from "../../../domain/entity/post/models/Post.ts";
-import type BaseView from "../../view/BaseView.tsx";
-import type {GetAllPostUseCase} from "../../../domain/interactors/post/GetAllPostUseCase.tsx";
+import type {Post} from "../../../../domain/entity/post/models/Post.ts";
+import type BaseView from "../../../view/BaseView.tsx";
+import type GetAllPostUseCase from "../../../../domain/interactors/post/GetAllPostUseCase.tsx";
 
 export default class PostListViewModelImpl implements PostListViewModel {
     public  posts: Post[];
     public isLoading: boolean;
+    // @ts-ignore
     errorMessage: string | null;
     isShowError: boolean;
 

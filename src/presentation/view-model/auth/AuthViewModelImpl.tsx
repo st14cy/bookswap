@@ -40,6 +40,8 @@ export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
         this.authHolder.addAuthListener(this);
     }
 
+    isLoading: boolean;
+
     public attachView = (baseView: BaseView): void => {
         this.baseView = baseView;
     };
@@ -94,7 +96,6 @@ export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
     };
 
     public onClickSignOut = (): void => {
-        // Удаляем данные авторизации без посредника в виде сценария использования
         this.authHolder.onSignOut();
     };
 

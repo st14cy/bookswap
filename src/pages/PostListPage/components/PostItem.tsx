@@ -10,7 +10,7 @@ interface ICatalogItemProps {
     location?:string;
 }
 
-const CatalogItem: React.FC<ICatalogItemProps>=({
+const PostItem: React.FC<ICatalogItemProps>=({
     id,
     name='Название',
     author='Автор',
@@ -18,14 +18,14 @@ const CatalogItem: React.FC<ICatalogItemProps>=({
     return (
       <li>
           <article className="relative">
-              <Link to={`/product/${id}`}>
+              <Link to={`/post/${id}`}>
                  <img src='#' width='260' height='250' className='bg-gray rounded-20'  alt='Изображение книги'/>
               </Link>
 
               <div>
                <LikeControl />
               </div>
-              <Link className='flex flex-col gap-4 items-center' to={`/product/${id}`}>
+              <Link className='flex flex-col gap-4 items-center' to={`/post/${id}`}>
                   <h3 className='flex flex-row gap-10'>
                       <span>
                         {name}
@@ -46,4 +46,4 @@ const CatalogItem: React.FC<ICatalogItemProps>=({
       </li>
     )
 }
-export default CatalogItem;
+export default PostItem;

@@ -3,13 +3,9 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import Header from "./widgets/Header";
 import Footer from "./widgets/Footer";
 import {ROUTES} from "./shared/config/routes";
-import AuthComponent from "./presentation/view/auth/AuthComponent.tsx";
-import {authViewModel} from "./di.ts";
 
 function App() {
   return (
-
-
       <BrowserRouter>
           {/* <div className="app-container d-flex container-fluid">
           <AuthComponent authViewModel={authViewModel} />

@@ -1,12 +1,8 @@
-// shared/config/routes.ts
-
-import CatalogPage from "../../pages/CatalogPage/CatalogPage.tsx";
-import SellerProfile from "../../pages/ProductCard/components/SellerProfile.tsx";
+import SellerProfile from "../../pages/PostDetailsPage/components/SellerProfile.tsx";
 import AddProductPage from "../../pages/AddProductPage/AddProductPage.tsx";
 import UserProductList from "../../pages/UserProductList/UserProductList.tsx";
-import ProductCard from "../../pages/ProductCard/ProductCard.tsx";
-import PostListComponents from "../../presentation/view/post/PostListComponents.tsx";
-import PostsPage from "../../pages/PostsPage.tsx";
+import PostsPage from "../../pages/PostListPage/PostListPage.tsx";
+import PostDetailsPage from "../../pages/PostDetailsPage/PostDetailsPage.tsx";
 
 export const ROUTES = {
     mainCatalog: {
@@ -14,6 +10,14 @@ export const ROUTES = {
         component: PostsPage,
         title: 'Каталог товаров',
     },
+    product: {
+        path: '/post/:postId',
+        component: PostDetailsPage,
+        title: 'Информация о товаре',
+    },
+
+
+
     seller: {
         path: '/seller',
         component: SellerProfile,
@@ -29,11 +33,7 @@ export const ROUTES = {
         component: UserProductList,
         title: 'Мои объявления',
     },
-    product: {
-        path: '/product/:productId',
-        component: ProductCard,
-        title: 'Информация о товаре',
-    },
+
 } as const;
 
 export type RouteKeys = keyof typeof ROUTES;
