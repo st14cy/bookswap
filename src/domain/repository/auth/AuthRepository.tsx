@@ -1,14 +1,14 @@
-import ValidationResult from '../../entity/auth/structures/ValidationResult'
-import AuthorizationResult from '../../entity/auth/structures/AuthorizationResult'
+import type ValidationResult from '../../entity/auth/structures/ValidationResult';
+import type AuthorizationResult from '../../entity/auth/structures/AuthorizationResult';
 
-export default interface AuthRepository{
+export default interface AuthRepository {
     /**
      * @throws {Error} if validation has not passed
      */
-    validateCrendentials(email:string,password:string) : Promise<ValidationResult>;
+    validateCredentials(email: string, password: string): Promise<ValidationResult>;
+
     /**
      * @throws {Error} if credentials have not passed
      */
-    login(email:string, password:string) : Promise<AuthorizationResult>;
-
+    login(email: string, password: string, validationKey: string): Promise<AuthorizationResult>;
 }

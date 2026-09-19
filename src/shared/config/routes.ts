@@ -5,11 +5,13 @@ import SellerProfile from "../../pages/ProductCard/components/SellerProfile.tsx"
 import AddProductPage from "../../pages/AddProductPage/AddProductPage.tsx";
 import UserProductList from "../../pages/UserProductList/UserProductList.tsx";
 import ProductCard from "../../pages/ProductCard/ProductCard.tsx";
+import PostListComponents from "../../presentation/view/post/PostListComponents.tsx";
+import PostsPage from "../../pages/PostsPage.tsx";
 
 export const ROUTES = {
     mainCatalog: {
         path: '/',
-        component: CatalogPage,
+        component: PostsPage,
         title: 'Каталог товаров',
     },
     seller: {

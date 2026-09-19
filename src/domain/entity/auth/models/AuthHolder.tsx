@@ -1,6 +1,6 @@
-import AuthListener from "./AuthListener.tsx";
+import  AuthListener from "./AuthListener.tsx";
 
-export class AuthHolder {
+export default class AuthHolder {
     private authListeners: AuthListener[];
     private isAuthorized: boolean;
     private authToken: string;
