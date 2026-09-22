@@ -12,8 +12,11 @@ export default class PostUserListViewModelImpl implements PostUserListViewModel 
 
     private baseView?: BaseView;
 
+
     public constructor(
+        // @ts-ignore
         private readonly getPostsByUserUseCase: GetAllByUserIdUseCase,
+        // @ts-ignore
         private readonly userId: string,
     ) {}
 

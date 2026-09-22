@@ -1,7 +1,8 @@
 import type PostDetailViewModel from './PostDetailViewModel';
 import type BaseView from '../../../view/BaseView';
 import GetPostByIdUseCase from '../../../../domain/interactors/post/GetPostByIdUseCase';
-import type Post from '../../../../domain/entity/post/models/Post';
+import type {Post} from "../../../../domain/entity/post/models/Post.ts";
+
 
 export default class PostDetailViewModelImpl implements PostDetailViewModel {
     public post: Post | null;

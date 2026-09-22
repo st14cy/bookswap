@@ -1,7 +1,7 @@
 import React, {useMemo} from 'react';
 import {useNavigate} from "react-router-dom";
 import PostFormViewModelImpl from "../../presentation/view-model/post/form/PostFormViewModelImpl.tsx";
-import {createPostUsecase} from "../../di.ts";
+import {createPostUsecase, updatePostUsecase} from "../../di.ts";
 import PostFormComponent from "../../presentation/view/post/PostFormComponent.tsx";
 
 
@@ -10,7 +10,7 @@ const AddPostPage: React.FC = () => {
     const navigate = useNavigate();
 
     const viewModel = useMemo(
-        () => new PostFormViewModelImpl(createPostUsecase),
+        () => new PostFormViewModelImpl(createPostUsecase, updatePostUsecase),
         [],
     );
     return (

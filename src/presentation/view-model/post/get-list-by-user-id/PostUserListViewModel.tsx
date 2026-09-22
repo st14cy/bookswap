@@ -1,4 +1,3 @@
-import type BaseView from "../../../view/BaseView.tsx";
 import type BaseViewModel from "../../BaseViewModel.tsx";
 import type {Post} from "../../../../domain/entity/post/models/Post.ts";
 

@@ -1,5 +1,5 @@
 import type {Post} from "../../entity/post/models/Post.ts";
-import type CreatePost from "../../entity/post/models/CreatePost.ts";
+import type {CreatePost} from "../../entity/post/models/CreatePost.ts";
 import type {UpdatePost} from "../../entity/post/models/UpdatePost.ts";
 
 export  interface  PostRepository{

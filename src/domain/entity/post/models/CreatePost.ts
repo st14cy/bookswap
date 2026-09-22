@@ -1,4 +1,4 @@
-export interface CreatePostDto {
+export interface CreatePost {
     title: string;
     authorName: string;
     description: string;

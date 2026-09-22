@@ -1,4 +1,4 @@
-export interface UpdatePostDto {
+export interface UpdatePost {
     id: string;
     title: string;
     authorName: string;

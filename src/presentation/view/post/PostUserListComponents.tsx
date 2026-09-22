@@ -6,7 +6,6 @@ import UserProductItem from "../../../pages/UserProductList/components/UserProdu
 
 interface Props {
     viewModel: PostUserListViewModelimpl;
-    userId: string;
 }
 
 

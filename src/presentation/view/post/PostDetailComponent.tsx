@@ -58,7 +58,7 @@ const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
 
                 </div>
                 <div>
-                    <Typography variant='span'>{`${viewModel.post.id},${viewModel.post.startDate}, ${viewModel.post.viewsCount} просмотра`}</Typography>
+                    <Typography variant='span'>{`${viewModel.post.id},${viewModel.post}, ${viewModel.post} просмотра`}</Typography>
                 </div>
 
             </div>

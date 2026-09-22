@@ -7,8 +7,9 @@ import AuthViewModelImpl from './presentation/view-model/auth/AuthViewModelImpl'
 import PostApiRepository from './data/post/PostApiRepository';
 import GetAllPostUseCase from './domain/interactors/post/GetAllPostUseCase';
 import GetPostByIdUseCase from './domain/interactors/post/GetPostByIdUseCase';
-import CreatePostByIdUseCase from './domain/interactors/post/CreateNewPostUseCase';
 import GetAllByUserIdUseCase from "./domain/interactors/post/GetAllByUserIdUseCase.tsx";
+import UpdatePostUseCase from "./domain/interactors/post/UpdatePostUseCase.tsx";
+import CreatePostUseCase from "./domain/interactors/post/CreateNewPostUseCase";
 
 // --- Data ---
 const authRepository = new AuthFakeApi();
@@ -21,7 +22,8 @@ export const getAllPostsUseCase = new GetAllPostUseCase(postRepository);
 export const getPostByIdUseCase = new GetPostByIdUseCase(postRepository);
 export const getPostsByUserUseCase = new GetAllByUserIdUseCase(postRepository);
 
-export const createPostUsecase = new CreatePostByIdUseCase(postRepository);
+export const createPostUsecase = new CreatePostUseCase(postRepository);
+export const updatePostUsecase = new UpdatePostUseCase(postRepository);
 
 // --- Presentation (синглтоны) ---
 // AuthViewModel — один на приложение (кнопка в шапке)
