@@ -1,4 +1,4 @@
-export interface Post {
+export interface UpdatePostDto {
     id: string;
     title: string;
     authorName: string;
@@ -12,5 +12,4 @@ export interface Post {
     city: string;
     street: string;
     houseNumber: string;
-    ownerId: string;
 }

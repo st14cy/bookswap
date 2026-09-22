@@ -32,7 +32,7 @@ const Header: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-40">
                     <div className="flex gap-40">
-                        <Link to="/additem">+ разместить объявление</Link>
+                        <Link to="/posts/new">+ разместить объявление</Link>
                         <Link to="/profile">мои объявления</Link>
                     </div>
                     <div className="flex items-center gap-20">

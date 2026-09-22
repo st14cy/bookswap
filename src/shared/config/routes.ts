@@ -3,6 +3,7 @@ import AddProductPage from "../../pages/AddProductPage/AddProductPage.tsx";
 import UserProductList from "../../pages/UserProductList/UserProductList.tsx";
 import PostsPage from "../../pages/PostListPage/PostListPage.tsx";
 import PostDetailsPage from "../../pages/PostDetailsPage/PostDetailsPage.tsx";
+import AddPostPage from "../../pages/AddPostPage/AddPostPage.tsx";
 
 export const ROUTES = {
     mainCatalog: {
@@ -15,6 +16,10 @@ export const ROUTES = {
         component: PostDetailsPage,
         title: 'Информация о товаре',
     },
+    addPost: {
+        path: '/posts/new',
+        component: AddPostPage,
+        title: 'Новое объявление' },
 
 
 

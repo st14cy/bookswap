@@ -1,5 +1,4 @@
-export interface Post {
-    id: string;
+export interface CreatePostDto {
     title: string;
     authorName: string;
     description: string;

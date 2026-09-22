@@ -16,7 +16,6 @@ export default class PostListViewModelImpl implements PostListViewModel {
 
     public constructor(getAllPostUseCase: GetAllPostUseCase) {
         this.getAllPostUseCase=getAllPostUseCase;
-
         this.posts = [];
         this.isLoading = false;
         this.isShowError = false;
