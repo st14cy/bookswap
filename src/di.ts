@@ -8,6 +8,7 @@ import PostApiRepository from './data/post/PostApiRepository';
 import GetAllPostUseCase from './domain/interactors/post/GetAllPostUseCase';
 import GetPostByIdUseCase from './domain/interactors/post/GetPostByIdUseCase';
 import CreatePostByIdUseCase from './domain/interactors/post/CreateNewPostUseCase';
+import GetAllByUserIdUseCase from "./domain/interactors/post/GetAllByUserIdUseCase.tsx";
 
 // --- Data ---
 const authRepository = new AuthFakeApi();
@@ -18,6 +19,7 @@ export const authHolder = new AuthHolder();          // синглтон — о�
 export const loginUseCase = new LoginUseCase(authRepository, authHolder);
 export const getAllPostsUseCase = new GetAllPostUseCase(postRepository);
 export const getPostByIdUseCase = new GetPostByIdUseCase(postRepository);
+export const getPostsByUserUseCase = new GetAllByUserIdUseCase(postRepository);
 
 export const createPostUsecase = new CreatePostByIdUseCase(postRepository);
 

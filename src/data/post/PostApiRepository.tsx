@@ -14,8 +14,6 @@ export default class PostApiRepository{
         const  data = await response.json();
         return data.map(this.mapToEntity)
     }
-
-
     async  getById(id: string):Promise<Post>{
         const  response = await fetch(`${this.baseUrl}/api/Advertisement/getById/${id}`)
         if(!response.ok) throw new Error(`Failed to fetch one post:${response.status}`);
@@ -23,7 +21,12 @@ export default class PostApiRepository{
         return  this.mapToEntity(data);
     }
 
-
+    async  getListByUserId(id: string):Promise<Post[]>{
+        const  response = await fetch(`${this.baseUrl}/api/Advertisement/getByUser/446b6c74-9d7d-4500-86b6-92b02867b27c`)
+        if(!response.ok) throw new Error(`Failed to fetch one post:${response.status}`);
+        const data = await  response.json();
+        return  this.mapToEntity(data);
+    }
     async create(post:CreatePost): Promise<Post>{
         const res = await fetch(`${this.baseUrl}/api/Advertisement/createAdvertisement`, {
             method: 'POST',
@@ -33,7 +36,6 @@ export default class PostApiRepository{
         if (!res.ok) throw new Error('Не удалось создать объявление');
         return this.mapToEntity(await res.json());
     }
-
     public async update(dto: UpdatePost): Promise<Post> {
         const res = await fetch(`${this.baseUrl}/api/Advertisement/posts/${dto.id}`, {
             method: 'PUT',
@@ -43,6 +45,12 @@ export default class PostApiRepository{
         if (!res.ok) throw new Error('Не удалось обновить объявление');
         return this.mapToEntity(await res.json());
     }
+
+
+
+
+
+
 
     private mapDtoToRequest(dto: CreatePost) {
         const body: Record<string, unknown> = {

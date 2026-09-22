@@ -1,9 +1,8 @@
 import SellerProfile from "../../pages/PostDetailsPage/components/SellerProfile.tsx";
-import AddProductPage from "../../pages/AddProductPage/AddProductPage.tsx";
-import UserProductList from "../../pages/UserProductList/UserProductList.tsx";
 import PostsPage from "../../pages/PostListPage/PostListPage.tsx";
 import PostDetailsPage from "../../pages/PostDetailsPage/PostDetailsPage.tsx";
 import AddPostPage from "../../pages/AddPostPage/AddPostPage.tsx";
+import UsersPostPage from "../../pages/UsersPostPage/UsersPostPage.tsx";
 
 export const ROUTES = {
     mainCatalog: {
@@ -20,6 +19,10 @@ export const ROUTES = {
         path: '/posts/new',
         component: AddPostPage,
         title: 'Новое объявление' },
+    usersPosts: {
+        path: 'profile',
+        component: UsersPostPage,
+        title: 'Мои объявления' },
 
 
 
@@ -28,17 +31,6 @@ export const ROUTES = {
         component: SellerProfile,
         title: 'Профиль',
     },
-    newProduct: {
-        path: '/additem',
-        component: AddProductPage,
-        title: 'Добавление товара',
-    },
-    userListProduct: {
-        path: '/profile',
-        component: UserProductList,
-        title: 'Мои объявления',
-    },
-
 } as const;
 
 export type RouteKeys = keyof typeof ROUTES;
