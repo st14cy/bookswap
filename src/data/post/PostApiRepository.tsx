@@ -1,12 +1,19 @@
 import type {Post} from "../../domain/entity/post/models/Post.ts";
-import type CreatePost from "../../domain/entity/post/models/CreatePost.ts";
+
 import type {UpdatePost} from "../../domain/entity/post/models/UpdatePost.ts";
+import type {CreatePost} from "../../domain/entity/post/models/CreatePost.ts";
+import type AuthorizedHttpClient from "../http/AuthorizedHttpClient.ts";
 
 export default class PostApiRepository{
     /*private readonly baseUrl=import.meta.env.DEV
         ? ''
         : (import.meta.env.VITE_API_URL ?? '');*/
     private readonly baseUrl=import.meta.env.VITE_API_URL;
+    private readonly httpClient: AuthorizedHttpClient;
+
+    constructor(httpClient: AuthorizedHttpClient) {
+        this.httpClient = httpClient;
+    }
 
     async  getAll():Promise<Post[]>{
         const response = await  fetch(`${this.baseUrl}/api/Advertisement/getAll`)
@@ -28,7 +35,7 @@ export default class PostApiRepository{
         return  this.mapToEntity(data);
     }
     async create(post:CreatePost): Promise<Post>{
-        const res = await fetch(`${this.baseUrl}/api/Advertisement/createAdvertisement`, {
+        const res = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/createAdvertisement`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(this.mapDtoToRequest(post)),
@@ -37,7 +44,7 @@ export default class PostApiRepository{
         return this.mapToEntity(await res.json());
     }
     public async update(dto: UpdatePost): Promise<Post> {
-        const res = await fetch(`${this.baseUrl}/api/Advertisement/posts/${dto.id}`, {
+        const res = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/posts/${dto.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(this.mapDtoToRequest(dto)),

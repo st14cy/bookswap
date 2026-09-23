@@ -1,6 +1,10 @@
-import AuthFakeApi from './data/auth/AuthFakeApi';
+// --- Auth ---
+import AuthApi from './data/auth/AuthApi';
+import AuthorizedHttpClient from './data/http/AuthorizedHttpClient';
 import AuthHolder from './domain/entity/auth/models/AuthHolder';
 import LoginUseCase from './domain/interactors/auth/LoginUseCase';
+import RegisterUseCase from './domain/interactors/auth/RegisterUseCase.tsx';
+import LogoutUseCase from './domain/interactors/auth/LogoutUseCase.tsx';
 import AuthViewModelImpl from './presentation/view-model/auth/AuthViewModelImpl';
 
 // --- Post ---
@@ -11,20 +15,24 @@ import GetAllByUserIdUseCase from "./domain/interactors/post/GetAllByUserIdUseCa
 import UpdatePostUseCase from "./domain/interactors/post/UpdatePostUseCase.tsx";
 import CreatePostUseCase from "./domain/interactors/post/CreateNewPostUseCase";
 
-// --- Data ---
-const authRepository = new AuthFakeApi();
-const postRepository = new PostApiRepository();
+// --- Domain state ---
+export const authHolder = new AuthHolder();          // синглтон — общий state, восстанавливается из localStorage
 
-// --- Domain ---
-export const authHolder = new AuthHolder();          // синглтон — общий state
+// --- Data ---
+const authRepository = new AuthApi();                // для работы без бэкенда: new AuthFakeApi()
+export const httpClient = new AuthorizedHttpClient(authHolder, authRepository);
+const postRepository = new PostApiRepository(httpClient);
+
+// --- Use cases ---
 export const loginUseCase = new LoginUseCase(authRepository, authHolder);
+export const registerUseCase = new RegisterUseCase(authRepository, authHolder);
+export const logoutUseCase = new LogoutUseCase(authRepository, authHolder);
+
 export const getAllPostsUseCase = new GetAllPostUseCase(postRepository);
 export const getPostByIdUseCase = new GetPostByIdUseCase(postRepository);
 export const getPostsByUserUseCase = new GetAllByUserIdUseCase(postRepository);
-
 export const createPostUsecase = new CreatePostUseCase(postRepository);
 export const updatePostUsecase = new UpdatePostUseCase(postRepository);
 
-// --- Presentation (синглтоны) ---
-// AuthViewModel — один на приложение (кнопка в шапке)
-export const authViewModel = new AuthViewModelImpl(loginUseCase, authHolder);
+// --- View models ---
+export const authViewModel = new AuthViewModelImpl(loginUseCase, registerUseCase, logoutUseCase, authHolder);

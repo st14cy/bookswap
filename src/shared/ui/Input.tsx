@@ -9,6 +9,9 @@ interface InputProps {
     value?: string;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     style?: 'base' | 'search';
+    /** Текст скрытой подписи для скринридеров */
+    label?: string;
+    autoComplete?: string;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -20,6 +23,8 @@ const Input: React.FC<InputProps> = ({
                                          value,
                                          onChange,
                                          style = 'base',
+                                         label = 'Введите данные',
+                                         autoComplete,
                                      }) => {
     const styles = {
         base: 'bg-gray rounded-12 py-22 px-20 text-16 placeholder:text-16',
@@ -29,7 +34,7 @@ const Input: React.FC<InputProps> = ({
     return (
         <>
             <label className="visually-hidden" htmlFor={id}>
-                Введите данные
+                {label}
             </label>
             <input
                 name={name}
@@ -39,6 +44,7 @@ const Input: React.FC<InputProps> = ({
                 id={id}
                 value={value}
                 onChange={onChange}
+                autoComplete={autoComplete}
                 className={styles[style]}
             />
         </>

@@ -1,151 +1,115 @@
-
 import React from 'react';
-import type BaseView from '../BaseView';
-import  type AuthViewModel from '../../view-model/auth/AuthViewModel';
+import type AuthViewModel from '../../view-model/auth/AuthViewModel';
+import Input from '../../../shared/ui/Input.tsx';
+import Button from '../../../shared/ui/Button.tsx';
+import useAuthViewModel from '../../hooks/useAuthViewModel.ts';
 
-export interface AuthComponentProps {
+interface Props {
     authViewModel: AuthViewModel;
 }
 
-export interface AuthComponentState {
-    emailQuery: string;
-    passwordQuery: string;
-    isSignInButtonVisible: boolean;
-    isSignOutButtonVisible: boolean;
+const AuthComponent: React.FC<Props> = ({authViewModel}) => {
+    const vm = useAuthViewModel(authViewModel);
+    const isRegisterMode = vm.isRegisterMode;
 
-    isShowError: boolean;
-    errorMessage: string;
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        void vm.onSubmit();
+    };
 
-    authStatus: string;
-    isAuthStatusPositive: boolean;
-}
+    return (
+        <form className="flex flex-col gap-3" onSubmit={handleSubmit} noValidate>
+            <h2 className="text-24 font-bold mb-2">
+                {isRegisterMode ? 'Регистрация' : 'Вход'}
+            </h2>
 
-export default class AuthComponent
-    extends React.Component<AuthComponentProps, AuthComponentState>
-    implements BaseView {
-    private authViewModel: AuthViewModel;
+            <Input style="base"
+                   name="login"
+                   id="auth-login"
+                   type="text"
+                   label={isRegisterMode ? 'Логин' : 'Логин или email'}
+                   placeholder={isRegisterMode ? 'Логин' : 'Логин или email'}
+                   autoComplete="username"
+                   value={vm.loginQuery}
+                   disabled={vm.isLoading}
+                   onChange={(e) => vm.onLoginQueryChanged(e.target.value)}
+            />
 
-    public constructor(props: AuthComponentProps) {
-        super(props);
+            {isRegisterMode && (
+                <>
+                    <Input style="base"
+                           name="email"
+                           id="auth-email"
+                           type="email"
+                           label="Email"
+                           placeholder="user@email.com"
+                           autoComplete="email"
+                           value={vm.emailQuery}
+                           disabled={vm.isLoading}
+                           onChange={(e) => vm.onEmailQueryChanged(e.target.value)}
+                    />
+                    <Input style="base"
+                           name="firstName"
+                           id="auth-name"
+                           type="text"
+                           label="Имя"
+                           placeholder="Имя (необязательно)"
+                           autoComplete="given-name"
+                           value={vm.nameQuery}
+                           disabled={vm.isLoading}
+                           onChange={(e) => vm.onNameQueryChanged(e.target.value)}
+                    />
+                </>
+            )}
 
-        const { authViewModel } = this.props;
-        this.authViewModel = authViewModel;
+            <Input style="base"
+                   name="password"
+                   id="auth-password"
+                   type="password"
+                   label="Пароль"
+                   placeholder="Пароль"
+                   autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
+                   value={vm.passwordQuery}
+                   disabled={vm.isLoading}
+                   onChange={(e) => vm.onPasswordQueryChanged(e.target.value)}
+            />
 
-        this.state = {
-            emailQuery: authViewModel.emailQuery,
-            passwordQuery: authViewModel.passwordQuery,
-            isSignInButtonVisible: authViewModel.isSignInButtonVisible,
-            isSignOutButtonVisible: authViewModel.isSignOutButtonVisible,
+            {isRegisterMode && (
+                <Input style="base"
+                       name="confirmPassword"
+                       id="auth-confirm-password"
+                       type="password"
+                       label="Повторите пароль"
+                       placeholder="Повторите пароль"
+                       autoComplete="new-password"
+                       value={vm.confirmPasswordQuery}
+                       disabled={vm.isLoading}
+                       onChange={(e) => vm.onConfirmPasswordQueryChanged(e.target.value)}
+                />
+            )}
 
-            isShowError: authViewModel.isShowError,
-            errorMessage: authViewModel.errorMessage,
-
-            authStatus: authViewModel.authStatus,
-            isAuthStatusPositive: authViewModel.isAuthStatusPositive,
-        };
-    }
-
-    public componentDidMount(): void {
-        this.authViewModel.attachView(this);
-    }
-
-    public componentWillUnmount(): void {
-        this.authViewModel.detachView();
-    }
-
-    // При каждом обновлении ViewModel, мы обновляем
-    // state нашего компонента
-    public onViewModelChanged(): void {
-        this.setState({
-            emailQuery: this.authViewModel.emailQuery,
-            passwordQuery: this.authViewModel.passwordQuery,
-            isSignInButtonVisible: this.authViewModel.isSignInButtonVisible,
-            isSignOutButtonVisible: this.authViewModel.isSignOutButtonVisible,
-
-            isShowError: this.authViewModel.isShowError,
-            errorMessage: this.authViewModel.errorMessage,
-
-            authStatus: this.authViewModel.authStatus,
-            isAuthStatusPositive: this.authViewModel.isAuthStatusPositive,
-        });
-    }
-
-    public render(): JSX.Element {
-        const {
-            emailQuery,
-            passwordQuery,
-            isSignInButtonVisible,
-            isSignOutButtonVisible,
-
-            isShowError,
-            errorMessage,
-
-            authStatus,
-            isAuthStatusPositive,
-        } = this.state;
-
-        return (
-            <div className="row flex-grow-1 d-flex justify-content-center align-items-center">
-                <div className="auth-container col bg-white border rounded-lg py-4 px-5">
-                    <div className="row mt-2 mb-4">
-                        Status:
-                        <span className={`${isAuthStatusPositive ? 'text-success' : 'text-danger'}`}>
-              {authStatus}
-            </span>
-                    </div>
-
-                    <div className="row mt-2">
-                        <input
-                            type="text"
-                            placeholder="user@email.com"
-                            onChange={(e: React.FormEvent<HTMLInputElement>): void => {
-                                this.authViewModel.onEmailQueryChanged(e.currentTarget.value);
-                            }}
-                            value={emailQuery}
-                            className="form-control"
-                        />
-                    </div>
-                    <div className="row mt-2">
-                        <input
-                            type="password"
-                            placeholder="password"
-                            onChange={(e: React.FormEvent<HTMLInputElement>): void => {
-                                this.authViewModel.onPasswordQueryChanged(e.currentTarget.value);
-                            }}
-                            value={passwordQuery}
-                            className="form-control"
-                        />
-                    </div>
-
-                    {isShowError && (
-                        <div className="row my-3 text-danger justify-content-center">{errorMessage}</div>
-                    )}
-
-                    {isSignInButtonVisible && (
-                        <div className="row mt-4">
-                            <button
-                                type="button"
-                                className="col btn btn-primary"
-                                onClick={(): void => this.authViewModel.onClickSignIn()}
-                            >
-                                Sign in
-                            </button>
-                        </div>
-                    )}
-
-                    {isSignOutButtonVisible && (
-                        <div className="row mt-4">
-                            <button
-                                type="button"
-                                className="col btn btn-primary"
-                                onClick={(): void => this.authViewModel.onClickSignOut()}
-                            >
-                                Sign out
-                            </button>
-                        </div>
-                    )}
+            {vm.isShowError && (
+                <div role="alert" className="text-accent whitespace-pre-line">
+                    {vm.errorMessage}
                 </div>
-            </div>
-        );
-    }
-}
+            )}
+
+            <Button type="submit" variant="accent" disabled={vm.isLoading}>
+                {vm.isLoading
+                    ? 'Подождите…'
+                    : isRegisterMode ? 'Зарегистрироваться' : 'Войти'}
+            </Button>
+
+            <button
+                type="button"
+                className="text-blue underline-offset-2 hover:underline"
+                disabled={vm.isLoading}
+                onClick={() => vm.onClickSwitchMode()}
+            >
+                {isRegisterMode ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться'}
+            </button>
+        </form>
+    );
+};
+
+export default AuthComponent;

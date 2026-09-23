@@ -18,11 +18,13 @@ export const ROUTES = {
     addPost: {
         path: '/posts/new',
         component: AddPostPage,
-        title: 'Новое объявление' },
+        title: 'Новое объявление',
+        requiresAuth: true },
     usersPosts: {
         path: 'profile',
         component: UsersPostPage,
-        title: 'Мои объявления' },
+        title: 'Мои объявления',
+        requiresAuth: true },
 
 
 

@@ -1,14 +1,21 @@
-import type ValidationResult from '../../entity/auth/structures/ValidationResult';
 import type AuthorizationResult from '../../entity/auth/structures/AuthorizationResult';
+import type RegisterRepository from './RegisterRepository.tsx';
 
-export default interface AuthRepository {
+export default interface AuthRepository extends RegisterRepository {
     /**
-     * @throws {Error} if validation has not passed
-     */
-    validateCredentials(email: string, password: string): Promise<ValidationResult>;
-
-    /**
+     * Вход по логину или email
      * @throws {Error} if credentials have not passed
      */
-    login(email: string, password: string, validationKey: string): Promise<AuthorizationResult>;
+    login(loginOrEmail: string, password: string): Promise<AuthorizationResult>;
+
+    /**
+     * Получение новой пары токенов по refresh-токену
+     * @throws {Error} if refresh token is invalid or expired
+     */
+    refresh(refreshToken: string): Promise<AuthorizationResult>;
+
+    /**
+     * Выход: сервер удаляет refresh-токен пользователя
+     */
+    logout(accessToken: string): Promise<void>;
 }
