@@ -1,0 +1,1717 @@
+--- a/bookswap/src/App.tsx
++++ b/bookswap/src/App.tsx
+@@ -3,25 +3,29 @@
+ import Header from "./widgets/Header";
+ import Footer from "./widgets/Footer";
+ import {ROUTES} from "./shared/config/routes";
++import RequireAuth from "./presentation/view/auth/RequireAuth";
++import AuthModal from "./presentation/view/auth/AuthModal";
++import {authViewModel} from "./di";
+ 
+ function App() {
+   return (
+       <BrowserRouter>
+-          {/* <div className="app-container d-flex container-fluid">
+-          <AuthComponent authViewModel={authViewModel} />
+-        </div> */}
+-
+           <div className="px-4 sm:px-6 lg:px-8">
+               <Header />
+               <main>
+                   <Routes>
+                       {Object.entries(ROUTES).map(([key, route]) => {
+                           const Component = route.component;
+-                          return <Route key={key} path={route.path} element={<Component />} />;
++                          const requiresAuth = 'requiresAuth' in route && route.requiresAuth;
++                          const element = requiresAuth
++                              ? <RequireAuth authViewModel={authViewModel}><Component /></RequireAuth>
++                              : <Component />;
++                          return <Route key={key} path={route.path} element={element} />;
+                       })}
+                   </Routes>
+               </main>
+               <Footer />
++              <AuthModal authViewModel={authViewModel} />
+           </div>
+       </BrowserRouter>
+   )
+--- /dev/null
++++ b/bookswap/src/data/auth/AuthApi.tsx
+@@ -0,0 +1,94 @@
++import type AuthRepository from '../../domain/repository/auth/AuthRepository';
++import type {RegisterPayload} from '../../domain/repository/auth/RegisterPayload.tsx';
++import type AuthorizationResult from '../../domain/entity/auth/structures/AuthorizationResult';
++import readErrorMessage from '../http/readErrorMessage.ts';
++
++/** Ответ бэкенда (AuthResponseDto) */
++interface AuthResponseDto {
++    accessToken: string;
++    refreshToken: string;
++    expiresIn: number;
++    user: {
++        id: string;
++        login: string;
++        email: string;
++        firstName?: string | null;
++        lastName?: string | null;
++        isActive: boolean;
++        role: number;
++    };
++}
++
++/** Реальная работа с AuthController бэкенда (api/Auth/...) */
++export default class AuthApi implements AuthRepository {
++    private readonly baseUrl = `${import.meta.env.VITE_API_URL ?? ''}/api/Auth`;
++
++    public async login(loginOrEmail: string, password: string): Promise<AuthorizationResult> {
++        const data = await this.post<AuthResponseDto>('/login', {
++            login: loginOrEmail,
++            password,
++        });
++        return this.mapToResult(data);
++    }
++
++    public async register(payload: RegisterPayload): Promise<AuthorizationResult> {
++        const data = await this.post<AuthResponseDto>('/register', {
++            login: payload.login,
++            email: payload.email,
++            password: payload.password,
++            confirmPassword: payload.confirmPassword,
++            firstName: payload.firstName ?? null,
++        });
++        return this.mapToResult(data);
++    }
++
++    public async refresh(refreshToken: string): Promise<AuthorizationResult> {
++        const data = await this.post<AuthResponseDto>('/refresh', {refreshToken});
++        return this.mapToResult(data);
++    }
++
++    public async logout(accessToken: string): Promise<void> {
++        const response = await fetch(`${this.baseUrl}/logout`, {
++            method: 'POST',
++            headers: {Authorization: `Bearer ${accessToken}`},
++        });
++        if (!response.ok) {
++            throw new Error(await readErrorMessage(response));
++        }
++    }
++
++    private async post<T>(path: string, body: unknown): Promise<T> {
++        let response: Response;
++        try {
++            response = await fetch(`${this.baseUrl}${path}`, {
++                method: 'POST',
++                headers: {'Content-Type': 'application/json'},
++                body: JSON.stringify(body),
++            });
++        } catch {
++            throw new Error('Сервер недоступен. Проверьте, что API запущен');
++        }
++
++        if (!response.ok) {
++            throw new Error(await readErrorMessage(response));
++        }
++        return (await response.json()) as T;
++    }
++
++    private mapToResult(data: AuthResponseDto): AuthorizationResult {
++        return {
++            accessToken: data.accessToken,
++            refreshToken: data.refreshToken,
++            expiresIn: data.expiresIn,
++            user: {
++                id: data.user.id,
++                login: data.user.login,
++                email: data.user.email,
++                firstName: data.user.firstName,
++                lastName: data.user.lastName,
++                isActive: data.user.isActive,
++                role: data.user.role,
++            },
++        };
++    }
++}
+--- a/bookswap/src/data/auth/AuthFakeApi.tsx
++++ b/bookswap/src/data/auth/AuthFakeApi.tsx
+@@ -1,45 +1,42 @@
+ import type AuthRepository from '../../domain/repository/auth/AuthRepository';
+-import type ValidationResult from '../../domain/entity/auth/structures/ValidationResult';
++import type {RegisterPayload} from '../../domain/repository/auth/RegisterPayload.tsx';
+ import type AuthorizationResult from '../../domain/entity/auth/structures/AuthorizationResult';
+ 
+-// Класс, имитирующий доступ к API
++/**
++ * Фейковая реализация для работы без бэкенда.
++ * Тестовый аккаунт: логин "user" (или user@email.com), пароль "password".
++ * Чтобы включить — подставьте new AuthFakeApi() вместо new AuthApi() в di.ts.
++ */
+ export default class AuthFakeApi implements AuthRepository {
+-    /**
+-     * @throws {Error} if validation has not passed
+-     */
+-    validateCredentials(_email: string, password: string): Promise<ValidationResult> {
+-        return new Promise((resolve, reject) => {
+-            // Создаем правило, которое должен был бы поддерживать сервер
+-            if (password.length < 5) {
+-                reject(new Error('Password length should be more than 5 characters'));
+-                return;
+-            }
+-
+-            resolve({
+-                validationKey: 'A34dZ7',
+-            });
+-        });
++    public async login(loginOrEmail: string, password: string): Promise<AuthorizationResult> {
++        const isKnownUser = loginOrEmail === 'user' || loginOrEmail === 'user@email.com';
++        if (!isKnownUser || password !== 'password') {
++            throw new Error('Неверный логин или пароль');
++        }
++        return this.fakeResult('user', 'user@email.com', 'Тестовый пользователь');
+     }
+ 
+-    /**
+-     * @throws {Error} if credentials have not passed
+-     */
+-    login(email: string, password: string, validationKey: string): Promise<AuthorizationResult> {
+-        return new Promise((resolve, reject) => {
+-            // Имитируем проверку ключа валидации
+-            if (validationKey === 'A34dZ7') {
+-                // Создаем пример подходящего аккаунта с логином user@email.com и паролем password
+-                if (email === 'user@email.com' && password === 'password') {
+-                    resolve({
+-                        authorizationToken: 'Bearer ASKJdsfjdijosd93wiesf93isef',
+-                    });
+-                }
+-            } else {
+-                reject(new Error('Validation key is not correct. Please try later'));
+-                return;
+-            }
++    public async register(payload: RegisterPayload): Promise<AuthorizationResult> {
++        if (payload.password !== payload.confirmPassword) {
++            throw new Error('Пароли не совпадают');
++        }
++        return this.fakeResult(payload.login, payload.email, payload.firstName);
++    }
+ 
+-            reject(new Error('Email or password is not correct'));
+-        });
++    public async refresh(): Promise<AuthorizationResult> {
++        return this.fakeResult('user', 'user@email.com', 'Тестовый пользователь');
++    }
++
++    public async logout(): Promise<void> {
++        // nothing to do
++    }
++
++    private fakeResult(login: string, email: string, firstName?: string): AuthorizationResult {
++        return {
++            accessToken: 'fake-access-token',
++            refreshToken: 'fake-refresh-token',
++            expiresIn: 60 * 60,
++            user: {id: '00000000-0000-0000-0000-000000000001', login, email, firstName, isActive: true, role: 0},
++        };
+     }
+ }
+--- a/bookswap/src/data/auth/RegisterApi.tsx
++++ b/bookswap/src/data/auth/RegisterApi.tsx
+@@ -1,69 +1,3 @@
+-
+-import type AuthorizationResult from '../../domain/entity/auth/structures/AuthorizationResult';
+-import RegisterRepository,
+-import type {RegisterPayload} from "../../domain/repository/auth/RegisterPayload.tsx"; type {RegisterPayload} from "../../domain/repository/auth/RegisterRepository.tsx";
+-
+-interface AuthResponseDto {
+-    accessToken: string;
+-    refreshToken: string;
+-    expiresIn: number;
+-    user: {
+-        id: string;
+-        login: string;
+-        email: string;
+-        firstName?: string;
+-        lastName?: string;
+-        isActive: boolean;
+-        role: number;
+-    };
+-}
+-
+-export default class RegisterApi implements RegisterRepository {
+-    private readonly baseUrl = import.meta.env.VITE_API_URL;
+-
+-    /**
+-     * @throws {Error} if registration has not passed
+-     */
+-    public async register(payload: RegisterPayload): Promise<AuthorizationResult> {
+-        const response = await fetch(`${this.baseUrl}/Auth/register`, {
+-            method: 'POST',
+-            headers: { 'Content-Type': 'application/json' },
+-            body: JSON.stringify({
+-                login: payload.login,
+-                email: payload.email,
+-                password: payload.password,
+-                confirmPassword: payload.confirmPassword,
+-                firstName: payload.firstName ?? null,
+-            }),
+-        });
+-
+-        if (!response.ok) {
+-            const message = await this.readErrorMessage(response);
+-            throw new Error(message);
+-        }
+-
+-        const data = (await response.json()) as AuthResponseDto;
+-
+-        return {
+-            authorizationToken: data.accessToken,
+-        };
+-    }
+-
+-    private async readErrorMessage(response: Response): Promise<string> {
+-        try {
+-            const data = await response.json();
+-            if (data && typeof data.message === 'string') {
+-                return data.message;
+-            }
+-        } catch {
+-            // ignore
+-        }
+-        try {
+-            const text = await response.text();
+-            if (text) return text;
+-        } catch {
+-            // ignore
+-        }
+-        return `Request failed with status ${response.status}`;
+-    }
+-}+// Регистрация теперь реализована в AuthApi (вместе со входом, обновлением токена и выходом).
++// Этот файл оставлен для совместимости — его можно удалить.
++export {default} from './AuthApi.tsx';
+--- /dev/null
++++ b/bookswap/src/data/http/AuthorizedHttpClient.ts
+@@ -0,0 +1,70 @@
++import type AuthHolder from '../../domain/entity/auth/models/AuthHolder.tsx';
++import type AuthRepository from '../../domain/repository/auth/AuthRepository.tsx';
++
++/**
++ * Обёртка над fetch, которая:
++ *  - добавляет заголовок Authorization: Bearer <accessToken>, если пользователь вошёл;
++ *  - заранее обновляет истёкший access-токен через refresh-токен;
++ *  - при ответе 401 один раз пробует обновить токен и повторить запрос;
++ *  - если обновить не удалось — разлогинивает пользователя.
++ */
++export default class AuthorizedHttpClient {
++    private refreshPromise: Promise<boolean> | null = null;
++    private readonly authHolder: AuthHolder;
++    private readonly authRepository: AuthRepository;
++
++    public constructor(authHolder: AuthHolder, authRepository: AuthRepository) {
++        this.authHolder = authHolder;
++        this.authRepository = authRepository;
++    }
++
++    public async fetch(input: string, init: RequestInit = {}): Promise<Response> {
++        if (this.authHolder.isUserAuthorized() && this.authHolder.isAccessTokenExpired()) {
++            await this.refreshTokens();
++        }
++
++        let response = await fetch(input, this.withAuthHeader(init));
++
++        if (response.status === 401 && this.authHolder.isUserAuthorized()) {
++            const refreshed = await this.refreshTokens();
++            if (refreshed) {
++                response = await fetch(input, this.withAuthHeader(init));
++            }
++        }
++        return response;
++    }
++
++    private withAuthHeader(init: RequestInit): RequestInit {
++        const headers = new Headers(init.headers);
++        if (this.authHolder.isUserAuthorized()) {
++            headers.set('Authorization', `Bearer ${this.authHolder.getAuthToken()}`);
++        }
++        return {...init, headers};
++    }
++
++    /** Параллельные запросы используют одно и то же обновление токена */
++    private refreshTokens(): Promise<boolean> {
++        if (!this.refreshPromise) {
++            this.refreshPromise = this.doRefresh().finally(() => {
++                this.refreshPromise = null;
++            });
++        }
++        return this.refreshPromise;
++    }
++
++    private async doRefresh(): Promise<boolean> {
++        const refreshToken = this.authHolder.getRefreshToken();
++        if (!refreshToken) {
++            this.authHolder.onSignOut();
++            return false;
++        }
++        try {
++            const result = await this.authRepository.refresh(refreshToken);
++            this.authHolder.onSignIn(result);
++            return true;
++        } catch {
++            this.authHolder.onSignOut();
++            return false;
++        }
++    }
++}
+--- /dev/null
++++ b/bookswap/src/data/http/readErrorMessage.ts
+@@ -0,0 +1,30 @@
++/**
++ * Достаёт понятное сообщение об ошибке из ответа ASP.NET API.
++ * Поддерживает { message }, ProblemDetails ({ title, errors }) и простой текст.
++ */
++export default async function readErrorMessage(response: Response): Promise<string> {
++    let text = '';
++    try {
++        text = await response.text();
++    } catch {
++        // ignore
++    }
++
++    if (text) {
++        try {
++            const data = JSON.parse(text);
++            if (data && typeof data.message === 'string') return data.message;
++            if (data && data.errors && typeof data.errors === 'object') {
++                const messages = Object.values(data.errors as Record<string, string[]>).flat();
++                if (messages.length > 0) return messages.join('\n');
++            }
++            if (data && typeof data.title === 'string') return data.title;
++        } catch {
++            return text;
++        }
++    }
++
++    if (response.status === 401) return 'Необходимо войти в аккаунт';
++    if (response.status >= 500) return 'Ошибка сервера. Попробуйте позже';
++    return `Ошибка запроса (${response.status})`;
++}
+--- a/bookswap/src/data/post/PostApiRepository.tsx
++++ b/bookswap/src/data/post/PostApiRepository.tsx
+@@ -2,12 +2,18 @@
+ 
+ import type {UpdatePost} from "../../domain/entity/post/models/UpdatePost.ts";
+ import type {CreatePost} from "../../domain/entity/post/models/CreatePost.ts";
++import type AuthorizedHttpClient from "../http/AuthorizedHttpClient.ts";
+ 
+ export default class PostApiRepository{
+     /*private readonly baseUrl=import.meta.env.DEV
+         ? ''
+         : (import.meta.env.VITE_API_URL ?? '');*/
+     private readonly baseUrl=import.meta.env.VITE_API_URL;
++    private readonly httpClient: AuthorizedHttpClient;
++
++    constructor(httpClient: AuthorizedHttpClient) {
++        this.httpClient = httpClient;
++    }
+ 
+     async  getAll():Promise<Post[]>{
+         const response = await  fetch(`${this.baseUrl}/api/Advertisement/getAll`)
+@@ -29,7 +35,7 @@
+         return  this.mapToEntity(data);
+     }
+     async create(post:CreatePost): Promise<Post>{
+-        const res = await fetch(`${this.baseUrl}/api/Advertisement/createAdvertisement`, {
++        const res = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/createAdvertisement`, {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify(this.mapDtoToRequest(post)),
+@@ -38,7 +44,7 @@
+         return this.mapToEntity(await res.json());
+     }
+     public async update(dto: UpdatePost): Promise<Post> {
+-        const res = await fetch(`${this.baseUrl}/api/Advertisement/posts/${dto.id}`, {
++        const res = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/posts/${dto.id}`, {
+             method: 'PUT',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify(this.mapDtoToRequest(dto)),
+--- a/bookswap/src/di.ts
++++ b/bookswap/src/di.ts
+@@ -1,6 +1,10 @@
+-import AuthFakeApi from './data/auth/AuthFakeApi';
++// --- Auth ---
++import AuthApi from './data/auth/AuthApi';
++import AuthorizedHttpClient from './data/http/AuthorizedHttpClient';
+ import AuthHolder from './domain/entity/auth/models/AuthHolder';
+ import LoginUseCase from './domain/interactors/auth/LoginUseCase';
++import RegisterUseCase from './domain/interactors/auth/RegisterUseCase.tsx';
++import LogoutUseCase from './domain/interactors/auth/LogoutUseCase.tsx';
+ import AuthViewModelImpl from './presentation/view-model/auth/AuthViewModelImpl';
+ 
+ // --- Post ---
+@@ -10,23 +14,25 @@
+ import GetAllByUserIdUseCase from "./domain/interactors/post/GetAllByUserIdUseCase.tsx";
+ import UpdatePostUseCase from "./domain/interactors/post/UpdatePostUseCase.tsx";
+ import CreatePostUseCase from "./domain/interactors/post/CreateNewPostUseCase";
+-import RegisterUseCase from "./domain/interactors/auth/RegisterUseCase.tsx";
+-import RegisterApi from "./data/auth/RegisterApi.tsx";
++
++// --- Domain state ---
++export const authHolder = new AuthHolder();          // синглтон — общий state, восстанавливается из localStorage
+ 
+ // --- Data ---
+-const authRepository = new AuthFakeApi();
+-const registerRepository= new RegisterApi();
+-const postRepository = new PostApiRepository();
++const authRepository = new AuthApi();                // для работы без бэкенда: new AuthFakeApi()
++export const httpClient = new AuthorizedHttpClient(authHolder, authRepository);
++const postRepository = new PostApiRepository(httpClient);
+ 
+-// --- Domain ---
+-export const authHolder = new AuthHolder();          // синглтон — общий state
++// --- Use cases ---
+ export const loginUseCase = new LoginUseCase(authRepository, authHolder);
++export const registerUseCase = new RegisterUseCase(authRepository, authHolder);
++export const logoutUseCase = new LogoutUseCase(authRepository, authHolder);
++
+ export const getAllPostsUseCase = new GetAllPostUseCase(postRepository);
+ export const getPostByIdUseCase = new GetPostByIdUseCase(postRepository);
+ export const getPostsByUserUseCase = new GetAllByUserIdUseCase(postRepository);
+-
+ export const createPostUsecase = new CreatePostUseCase(postRepository);
+ export const updatePostUsecase = new UpdatePostUseCase(postRepository);
+ 
+-const registerUseCase = new RegisterUseCase(registerRepository,authHolder);
+-export const authViewModel = new AuthViewModelImpl(loginUseCase,registerUseCase, authHolder);
++// --- View models ---
++export const authViewModel = new AuthViewModelImpl(loginUseCase, registerUseCase, logoutUseCase, authHolder);
+--- a/bookswap/src/domain/entity/auth/models/AuthHolder.tsx
++++ b/bookswap/src/domain/entity/auth/models/AuthHolder.tsx
+@@ -1,55 +1,109 @@
+ import type AuthListener from "./AuthListener.tsx";
++import type {AuthUser} from "./AuthUser.ts";
++import type AuthorizationResult from "../structures/AuthorizationResult.tsx";
+ 
++const STORAGE_KEY = 'bookswap.auth';
+ 
++interface StoredSession {
++    accessToken: string;
++    refreshToken: string;
++    /** Момент истечения access-токена (ms since epoch) */
++    accessTokenExpiresAt: number;
++    user: AuthUser;
++}
++
++/**
++ * Хранит состояние авторизации (токены + пользователь),
++ * сохраняет его в localStorage и оповещает подписчиков об изменениях.
++ */
+ export default class AuthHolder {
+-    private authListeners: AuthListener[];
+-    private isAuthorized: boolean;
+-    private authToken: string;
++    private authListeners: AuthListener[] = [];
++    private session: StoredSession | null;
+ 
+     public constructor() {
+-        this.isAuthorized = false;
+-        this.authListeners = [];
+-        this.authToken = '';
++        this.session = AuthHolder.readFromStorage();
+     }
+ 
+-    public onSignIn(authToken:string): void {
+-        this.authToken = authToken;
+-        this.isAuthorized = true;
+-       this.notifyListeners();
++    public onSignIn(result: AuthorizationResult): void {
++        this.session = {
++            accessToken: result.accessToken,
++            refreshToken: result.refreshToken,
++            accessTokenExpiresAt: Date.now() + result.expiresIn * 1000,
++            user: result.user,
++        };
++        this.persist();
++        this.notifyListeners();
+     }
+ 
+     public onSignOut(): void {
+-        this.authToken = ' ';
+-        this.isAuthorized = false;
++        if (!this.session) return;
++        this.session = null;
++        this.persist();
+         this.notifyListeners();
+     }
+ 
+-    public isUserAuthorized():boolean{
+-        return this.isAuthorized;
++    public isUserAuthorized(): boolean {
++        return this.session !== null;
+     }
+ 
+     /**
+      * @throws {Error} if user is not authorized
+      */
+-
+     public getAuthToken(): string {
+-        if (!this.isAuthorized) {
++        if (!this.session) {
+             throw new Error('User is not authorized');
+         }
+-        return this.authToken;
++        return this.session.accessToken;
+     }
+ 
++    public getRefreshToken(): string | null {
++        return this.session?.refreshToken ?? null;
++    }
+ 
++    public getUser(): AuthUser | null {
++        return this.session?.user ?? null;
++    }
+ 
+-    public addAuthListener(authListener:AuthListener): void {
++    /** true, если access-токен истёк или истечёт в ближайшие 30 секунд */
++    public isAccessTokenExpired(): boolean {
++        if (!this.session) return true;
++        return Date.now() > this.session.accessTokenExpiresAt - 30_000;
++    }
++
++    public addAuthListener(authListener: AuthListener): void {
+         this.authListeners.push(authListener);
+     }
+ 
+-    public removeAuthListener(authListener:AuthListener): void {
+-        this.authListeners.splice(this.authListeners.indexOf(authListener), 1);
++    public removeAuthListener(authListener: AuthListener): void {
++        const index = this.authListeners.indexOf(authListener);
++        if (index !== -1) this.authListeners.splice(index, 1);
+     }
+ 
+     public notifyListeners(): void {
+-        this.authListeners.forEach((listener)=> listener.onAuthChanged());
++        this.authListeners.forEach((listener) => listener.onAuthChanged());
++    }
++
++    private persist(): void {
++        try {
++            if (this.session) {
++                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.session));
++            } else {
++                localStorage.removeItem(STORAGE_KEY);
++            }
++        } catch {
++            // localStorage недоступен (приватный режим и т.п.) — работаем только в памяти
++        }
++    }
++
++    private static readFromStorage(): StoredSession | null {
++        try {
++            const raw = localStorage.getItem(STORAGE_KEY);
++            if (!raw) return null;
++            const parsed = JSON.parse(raw) as StoredSession;
++            if (!parsed.accessToken || !parsed.refreshToken || !parsed.user) return null;
++            return parsed;
++        } catch {
++            return null;
++        }
+     }
+ }
+--- /dev/null
++++ b/bookswap/src/domain/entity/auth/models/AuthUser.ts
+@@ -0,0 +1,11 @@
++/** Данные текущего пользователя (соответствует UserInfoDto на бэкенде) */
++export interface AuthUser {
++    id: string;
++    login: string;
++    email: string;
++    firstName?: string | null;
++    lastName?: string | null;
++    isActive: boolean;
++    /** 0 — User, 1 — Admin */
++    role: number;
++}
+--- a/bookswap/src/domain/entity/auth/structures/AuthorizationResult.tsx
++++ b/bookswap/src/domain/entity/auth/structures/AuthorizationResult.tsx
+@@ -1,3 +1,10 @@
++import type {AuthUser} from '../models/AuthUser.ts';
++
++/** Результат успешного входа / регистрации / обновления токена */
+ export default interface AuthorizationResult {
+-    authorizationToken: string;
+-}+    accessToken: string;
++    refreshToken: string;
++    /** Время жизни access-токена в секундах */
++    expiresIn: number;
++    user: AuthUser;
++}
+--- a/bookswap/src/domain/interactors/auth/LoginUseCase.tsx
++++ b/bookswap/src/domain/interactors/auth/LoginUseCase.tsx
+@@ -2,10 +2,10 @@
+ import type AuthHolder from "../../entity/auth/models/AuthHolder.tsx";
+ 
+ export default class LoginUseCase {
+-    private  authRepository: AuthRepository;
++    private authRepository: AuthRepository;
+     private authHolder: AuthHolder;
+ 
+-    public  constructor( authRepository: AuthRepository,authHolder: AuthHolder) {
++    public constructor(authRepository: AuthRepository, authHolder: AuthHolder) {
+         this.authHolder = authHolder;
+         this.authRepository = authRepository;
+     }
+@@ -13,11 +13,8 @@
+     /**
+      * @throws {Error} if credentials are not valid or have not passed
+      */
+-
+-    public async loginUser(email: string, password: string): Promise<void> {
+-        const validatorRes = await this.authRepository.validateCredentials(email, password);
+-        const authRes = await this.authRepository.login(email, password, validatorRes.validationKey);
+-
+-        this.authHolder.onSignIn(authRes.authorizationToken);
++    public async loginUser(loginOrEmail: string, password: string): Promise<void> {
++        const result = await this.authRepository.login(loginOrEmail.trim(), password);
++        this.authHolder.onSignIn(result);
+     }
+ }
+--- /dev/null
++++ b/bookswap/src/domain/interactors/auth/LogoutUseCase.tsx
+@@ -0,0 +1,24 @@
++import type AuthRepository from '../../repository/auth/AuthRepository.tsx';
++import type AuthHolder from '../../entity/auth/models/AuthHolder.tsx';
++
++export default class LogoutUseCase {
++    private authRepository: AuthRepository;
++    private authHolder: AuthHolder;
++
++    public constructor(authRepository: AuthRepository, authHolder: AuthHolder) {
++        this.authRepository = authRepository;
++        this.authHolder = authHolder;
++    }
++
++    /** Выход никогда не падает: локальная сессия очищается в любом случае */
++    public async logoutUser(): Promise<void> {
++        if (!this.authHolder.isUserAuthorized()) return;
++        try {
++            await this.authRepository.logout(this.authHolder.getAuthToken());
++        } catch {
++            // сервер недоступен или токен истёк — всё равно выходим локально
++        } finally {
++            this.authHolder.onSignOut();
++        }
++    }
++}
+--- a/bookswap/src/domain/interactors/auth/RegisterUseCase.tsx
++++ b/bookswap/src/domain/interactors/auth/RegisterUseCase.tsx
+@@ -1,30 +1,27 @@
+ import type RegisterRepository from '../../repository/auth/RegisterRepository.tsx';
++import type {RegisterPayload} from '../../repository/auth/RegisterPayload.tsx';
+ import type AuthHolder from '../../entity/auth/models/AuthHolder.tsx';
+ 
+ export default class RegisterUseCase {
+     private registerRepository: RegisterRepository;
+     private authHolder: AuthHolder;
+ 
+-    public constructor(
+-        registerRepository: RegisterRepository,
+-        authHolder: AuthHolder,
+-    ) {
++    public constructor(registerRepository: RegisterRepository, authHolder: AuthHolder) {
+         this.registerRepository = registerRepository;
+         this.authHolder = authHolder;
+     }
+ 
+-    public async registerUser(email: string, password: string): Promise<void> {
+-        const validation = await this.registerRepository.validateRegistration(
+-            email,
+-            password,
+-        );
+-
+-        const result = await this.registerRepository.register(
+-            email,
+-            password,
+-            validation.validationKey,
+-        );
+-
+-        this.authHolder.onSignIn(result.authorizationToken);
++    /**
++     * Регистрирует пользователя и сразу авторизует его
++     * @throws {Error} if registration has not passed
++     */
++    public async registerUser(payload: RegisterPayload): Promise<void> {
++        const result = await this.registerRepository.register({
++            ...payload,
++            login: payload.login.trim(),
++            email: payload.email.trim(),
++            firstName: payload.firstName?.trim() || undefined,
++        });
++        this.authHolder.onSignIn(result);
+     }
+-}+}
+--- a/bookswap/src/domain/repository/auth/AuthRepository.tsx
++++ b/bookswap/src/domain/repository/auth/AuthRepository.tsx
+@@ -1,14 +1,21 @@
+-import type ValidationResult from '../../entity/auth/structures/ValidationResult';
+ import type AuthorizationResult from '../../entity/auth/structures/AuthorizationResult';
++import type RegisterRepository from './RegisterRepository.tsx';
+ 
+-export default interface AuthRepository {
++export default interface AuthRepository extends RegisterRepository {
+     /**
+-     * @throws {Error} if validation has not passed
++     * Вход по логину или email
++     * @throws {Error} if credentials have not passed
+      */
+-    validateCredentials(email: string, password: string): Promise<ValidationResult>;
++    login(loginOrEmail: string, password: string): Promise<AuthorizationResult>;
+ 
+     /**
+-     * @throws {Error} if credentials have not passed
++     * Получение новой пары токенов по refresh-токену
++     * @throws {Error} if refresh token is invalid or expired
+      */
+-    login(email: string, password: string, validationKey: string): Promise<AuthorizationResult>;
++    refresh(refreshToken: string): Promise<AuthorizationResult>;
++
++    /**
++     * Выход: сервер удаляет refresh-токен пользователя
++     */
++    logout(accessToken: string): Promise<void>;
+ }
+--- a/bookswap/src/domain/repository/auth/RegisterPayload.tsx
++++ b/bookswap/src/domain/repository/auth/RegisterPayload.tsx
+@@ -4,4 +4,4 @@
+     password: string;
+     confirmPassword: string;
+     firstName?: string;
+-}+}
+--- a/bookswap/src/domain/repository/auth/RegisterRepository.tsx
++++ b/bookswap/src/domain/repository/auth/RegisterRepository.tsx
+@@ -1,16 +1,11 @@
+ import type AuthorizationResult from '../../entity/auth/structures/AuthorizationResult';
++import type {RegisterPayload} from './RegisterPayload.tsx';
+ 
+-export interface RegisterPayload {
+-    login: string;
+-    email: string;
+-    password: string;
+-    confirmPassword: string;
+-    firstName?: string;
+-}
++export type {RegisterPayload};
+ 
+ export default interface RegisterRepository {
+     /**
+      * @throws {Error} if registration has not passed
+      */
+     register(payload: RegisterPayload): Promise<AuthorizationResult>;
+-}+}
+--- /dev/null
++++ b/bookswap/src/presentation/hooks/useAuthViewModel.ts
+@@ -0,0 +1,16 @@
++import {useEffect, useReducer} from 'react';
++import type AuthViewModel from '../view-model/auth/AuthViewModel';
++import type BaseView from '../view/BaseView';
++
++/** Подписывает компонент на изменения AuthViewModel и перерисовывает его */
++export default function useAuthViewModel<T extends AuthViewModel>(authViewModel: T): T {
++    const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
++
++    useEffect(() => {
++        const view: BaseView = {onViewModelChanged: () => forceUpdate()};
++        authViewModel.attachView(view);
++        return () => authViewModel.detachView(view);
++    }, [authViewModel]);
++
++    return authViewModel;
++}
+--- a/bookswap/src/presentation/view/auth/AuthComponent.tsx
++++ b/bookswap/src/presentation/view/auth/AuthComponent.tsx
+@@ -1,117 +1,115 @@
+-import React, { useEffect, useReducer } from 'react';
++import React from 'react';
+ import type AuthViewModel from '../../view-model/auth/AuthViewModel';
+-import type BaseView from '../../view/BaseView';
+ import Input from '../../../shared/ui/Input.tsx';
+-import Button from "../../../shared/ui/Button.tsx";
++import Button from '../../../shared/ui/Button.tsx';
++import useAuthViewModel from '../../hooks/useAuthViewModel.ts';
+ 
+ interface Props {
+     authViewModel: AuthViewModel;
+ }
+ 
+-const AuthComponent: React.FC<Props> = ({ authViewModel }) => {
+-    const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
++const AuthComponent: React.FC<Props> = ({authViewModel}) => {
++    const vm = useAuthViewModel(authViewModel);
++    const isRegisterMode = vm.isRegisterMode;
+ 
+-    useEffect(() => {
+-        const view: BaseView = {
+-            onViewModelChanged: () => forceUpdate(),
+-        };
+-        authViewModel.attachView(view);
+-        return () => authViewModel.detachView();
+-    }, [authViewModel]);
+-
+-    const isRegisterMode = authViewModel.isRegisterMode;
++    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
++        e.preventDefault();
++        void vm.onSubmit();
++    };
+ 
+     return (
+-        <div className="auth-container">
+-            <div className="status">
+-
+-                <span className={authViewModel.isAuthStatusPositive ? 'text-success' : 'text-danger'}>
+-                    {authViewModel.authStatus}
+-                </span>
+-            </div>
+-
+-            <h2 className="text-xl font-semibold mb-4">
+-                {isRegisterMode ? 'Sign up' : 'Sign in'}
++        <form className="flex flex-col gap-3" onSubmit={handleSubmit} noValidate>
++            <h2 className="text-24 font-bold mb-2">
++                {isRegisterMode ? 'Регистрация' : 'Вход'}
+             </h2>
+ 
+             <Input style="base"
+-                   name="name"
+-                   id="name"
++                   name="login"
++                   id="auth-login"
+                    type="text"
+-                   placeholder="Имя пользователя"
+-                   value={authViewModel.nameQuery}
+-                   onChange={(e) => authViewModel.onNameQueryChanged(e.target.value)}
++                   label={isRegisterMode ? 'Логин' : 'Логин или email'}
++                   placeholder={isRegisterMode ? 'Логин' : 'Логин или email'}
++                   autoComplete="username"
++                   value={vm.loginQuery}
++                   disabled={vm.isLoading}
++                   onChange={(e) => vm.onLoginQueryChanged(e.target.value)}
+             />
+ 
++            {isRegisterMode && (
++                <>
++                    <Input style="base"
++                           name="email"
++                           id="auth-email"
++                           type="email"
++                           label="Email"
++                           placeholder="user@email.com"
++                           autoComplete="email"
++                           value={vm.emailQuery}
++                           disabled={vm.isLoading}
++                           onChange={(e) => vm.onEmailQueryChanged(e.target.value)}
++                    />
++                    <Input style="base"
++                           name="firstName"
++                           id="auth-name"
++                           type="text"
++                           label="Имя"
++                           placeholder="Имя (необязательно)"
++                           autoComplete="given-name"
++                           value={vm.nameQuery}
++                           disabled={vm.isLoading}
++                           onChange={(e) => vm.onNameQueryChanged(e.target.value)}
++                    />
++                </>
++            )}
+ 
+             <Input style="base"
+-                name="email"
+-                id="email"
+-                type="text"
+-                placeholder="user@email.com"
+-                value={authViewModel.emailQuery}
+-                onChange={(e) => authViewModel.onEmailQueryChanged(e.target.value)}
+-            />
+-
+-            <Input style="base"
+-                name="password"
+-                id="password"
+-                type="password"
+-                placeholder="Пароль"
+-                value={authViewModel.passwordQuery}
+-                onChange={(e) => authViewModel.onPasswordQueryChanged(e.target.value)}
++                   name="password"
++                   id="auth-password"
++                   type="password"
++                   label="Пароль"
++                   placeholder="Пароль"
++                   autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
++                   value={vm.passwordQuery}
++                   disabled={vm.isLoading}
++                   onChange={(e) => vm.onPasswordQueryChanged(e.target.value)}
+             />
+ 
+             {isRegisterMode && (
+                 <Input style="base"
+-                        name="confirmPassword"
+-                        id="confirmPassword"
+-                        type="password"
+-                        placeholder="confirm password"
+-                        value={authViewModel.confirmPasswordQuery}
+-                        onChange={(e) => authViewModel.onConfirmPasswordQueryChanged(e.target.value)}
++                       name="confirmPassword"
++                       id="auth-confirm-password"
++                       type="password"
++                       label="Повторите пароль"
++                       placeholder="Повторите пароль"
++                       autoComplete="new-password"
++                       value={vm.confirmPasswordQuery}
++                       disabled={vm.isLoading}
++                       onChange={(e) => vm.onConfirmPasswordQueryChanged(e.target.value)}
+                 />
+             )}
+ 
+-            {authViewModel.isShowError && (
+-                <div className="text-danger">{authViewModel.errorMessage}</div>
++            {vm.isShowError && (
++                <div role="alert" className="text-accent whitespace-pre-line">
++                    {vm.errorMessage}
++                </div>
+             )}
+ 
+-            {authViewModel.isSignInButtonVisible && !isRegisterMode && (
+-                <Button onClick={() => authViewModel.onClickSignIn()}>
+-                    Войти
+-                </Button>
+-            )}
++            <Button type="submit" variant="accent" disabled={vm.isLoading}>
++                {vm.isLoading
++                    ? 'Подождите…'
++                    : isRegisterMode ? 'Зарегистрироваться' : 'Войти'}
++            </Button>
+ 
+-            {authViewModel.isRegisterButtonVisible && isRegisterMode && (
+-                <button type="button"
+-                    className="btn btn-primary"
+-                    onClick={() => authViewModel.onClickRegister()}>
+-                    Register
+-                </button>
+-            )}
+-
+-            {authViewModel.isSwitchModeButtonVisible && (
+-                <button
+-                    type="button"
+-                    className="btn btn-link"
+-                    onClick={() => authViewModel.onClickSwitchMode()}
+-                >
+-                    {isRegisterMode ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+-                </button>
+-            )}
+-
+-            {authViewModel.isSignOutButtonVisible && (
+-                <button
+-                    type="button"
+-                    className="btn btn-primary"
+-                    onClick={() => authViewModel.onClickSignOut()}
+-                >
+-                    Sign out
+-                </button>
+-            )}
+-        </div>
++            <button
++                type="button"
++                className="text-blue underline-offset-2 hover:underline"
++                disabled={vm.isLoading}
++                onClick={() => vm.onClickSwitchMode()}
++            >
++                {isRegisterMode ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться'}
++            </button>
++        </form>
+     );
+ };
+ 
+-export default AuthComponent;+export default AuthComponent;
+--- a/bookswap/src/presentation/view/auth/AuthModal.tsx
++++ b/bookswap/src/presentation/view/auth/AuthModal.tsx
+@@ -1,20 +1,22 @@
+ import React from 'react';
+ import AuthComponent from './AuthComponent';
+-import type AuthViewModelImpl from '../../view-model/auth/AuthViewModelImpl';
++import type AuthViewModel from '../../view-model/auth/AuthViewModel';
+ import Modal from "../../../shared/ui/modal/Modal.tsx";
++import useAuthViewModel from '../../hooks/useAuthViewModel.ts';
+ 
+ interface Props {
+-    isOpen: boolean;
+-    onClose: () => void;
+-    authViewModel: AuthViewModelImpl;
++    authViewModel: AuthViewModel;
+ }
+ 
+-const AuthModal: React.FC<Props> = ({ isOpen, onClose, authViewModel }) => {
++/** Модалка входа/регистрации. Открывается через authViewModel.openAuthModal() */
++const AuthModal: React.FC<Props> = ({authViewModel}) => {
++    const vm = useAuthViewModel(authViewModel);
++
+     return (
+-        <Modal isOpen={isOpen} onClose={onClose}>
+-            <AuthComponent authViewModel={authViewModel} />
++        <Modal isOpen={vm.isAuthModalOpen} onClose={vm.closeAuthModal}>
++            <AuthComponent authViewModel={vm} />
+         </Modal>
+     );
+ };
+ 
+-export default AuthModal;+export default AuthModal;
+--- /dev/null
++++ b/bookswap/src/presentation/view/auth/RequireAuth.tsx
+@@ -0,0 +1,28 @@
++import React from 'react';
++import type AuthViewModel from '../../view-model/auth/AuthViewModel';
++import useAuthViewModel from '../../hooks/useAuthViewModel.ts';
++import Button from '../../../shared/ui/Button.tsx';
++
++interface Props {
++    authViewModel: AuthViewModel;
++    children: React.ReactNode;
++}
++
++/** Показывает содержимое только авторизованным пользователям */
++const RequireAuth: React.FC<Props> = ({authViewModel, children}) => {
++    const vm = useAuthViewModel(authViewModel);
++
++    if (vm.isAuthorized) return <>{children}</>;
++
++    return (
++        <div className="flex flex-col items-center gap-4 py-16 text-center">
++            <p className="text-24">Эта страница доступна только после входа</p>
++            <div className="flex gap-4">
++                <Button variant="accent" onClick={() => vm.openAuthModal(false)}>Войти</Button>
++                <Button onClick={() => vm.openAuthModal(true)}>Зарегистрироваться</Button>
++            </div>
++        </div>
++    );
++};
++
++export default RequireAuth;
+--- a/bookswap/src/presentation/view-model/auth/AuthViewModel.tsx
++++ b/bookswap/src/presentation/view-model/auth/AuthViewModel.tsx
+@@ -1,35 +1,37 @@
+ import type BaseViewModel from '../BaseViewModel';
++import type BaseView from '../../view/BaseView';
+ 
+ export default interface AuthViewModel extends BaseViewModel {
++    /** Несколько вьюх (шапка, модалка, защищённые страницы) могут слушать одну модель */
++    detachView(baseView?: BaseView): void;
++
++    // --- состояние сессии ---
++    isAuthorized: boolean;
++    currentUserName: string;
++
++    // --- модалка ---
+     isAuthModalOpen: boolean;
++    isRegisterMode: boolean;
+ 
+-    nameQuery:string;
+-    emailQuery: string;
++    // --- поля формы ---
++    loginQuery: string;          // вход: логин или email; регистрация: логин
++    emailQuery: string;          // только регистрация
++    nameQuery: string;           // только регистрация (имя продавца, необязательно)
+     passwordQuery: string;
+     confirmPasswordQuery: string;
+ 
+-    isRegisterMode: boolean;
+-    isSignInButtonVisible: boolean;
+-    isSignOutButtonVisible: boolean;
+-    isRegisterButtonVisible: boolean;
+-    isSwitchModeButtonVisible: boolean;
++    openAuthModal(registerMode?: boolean): void;
++    closeAuthModal(): void;
++    onClickSwitchMode(): void;
+ 
+-    isShowError: boolean;
+-    errorMessage: string;
++    onLoginQueryChanged(value: string): void;
++    onEmailQueryChanged(value: string): void;
++    onNameQueryChanged(value: string): void;
++    onPasswordQueryChanged(value: string): void;
++    onConfirmPasswordQueryChanged(value: string): void;
+ 
+-    authStatus: string;
+-    isAuthStatusPositive: boolean;
+-
+-    openAuthModal(): void;
+-    closeAuthModal(): void;
+-
+-    onNameQueryChanged(nameQuery: string): void;
+-    onEmailQueryChanged(loginQuery: string): void;
+-    onPasswordQueryChanged(passwordQuery: string): void;
+-    onConfirmPasswordQueryChanged(passwordQuery: string): void;
+-
+-    onClickSignIn(): void;
+-    onClickSignOut(): void;
+-    onClickRegister(): void;
+-    onClickSwitchMode(): void;
+-}+    onSubmit(): Promise<void>;
++    onClickSignIn(): Promise<void>;
++    onClickRegister(): Promise<void>;
++    onClickSignOut(): Promise<void>;
++}
+--- a/bookswap/src/presentation/view-model/auth/AuthViewModelImpl.tsx
++++ b/bookswap/src/presentation/view-model/auth/AuthViewModelImpl.tsx
+@@ -1,80 +1,71 @@
+ import type AuthViewModel from './AuthViewModel';
+ import type BaseView from '../../view/BaseView';
+-import LoginUseCase from '../../../domain/interactors/auth/LoginUseCase';
+-import RegisterUseCase from '../../../domain/interactors/auth/RegisterUseCase';
+-import AuthHolder from '../../../domain/entity/auth/models/AuthHolder';
++import type LoginUseCase from '../../../domain/interactors/auth/LoginUseCase';
++import type RegisterUseCase from '../../../domain/interactors/auth/RegisterUseCase';
++import type LogoutUseCase from '../../../domain/interactors/auth/LogoutUseCase';
++import type AuthHolder from '../../../domain/entity/auth/models/AuthHolder';
++import type AuthListener from '../../../domain/entity/auth/models/AuthListener';
+ import FormValidator from '../../util/FormValidator';
+-import type AuthListener from '../../../domain/entity/auth/models/AuthListener';
+ 
+ export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
+-    public isAuthModalOpen: boolean;
+-
+-    public nameQuery: string;
+-    public emailQuery: string;
+-    public passwordQuery: string;
+-    public confirmPasswordQuery: string;
+-
+-    public isRegisterMode: boolean;
+-    public isSignInButtonVisible: boolean;
+-    public isSignOutButtonVisible: boolean;
+-    public isRegisterButtonVisible: boolean;
+-    public isSwitchModeButtonVisible: boolean;
+-
+-    public isShowError: boolean;
+-    public errorMessage: string;
+-
+-    public authStatus: string;
+-    public isAuthStatusPositive: boolean;
+-
+-    private baseView?: BaseView;
+-    private loginUseCase: LoginUseCase;
+-    private registerUseCase: RegisterUseCase;
+-    private authHolder: AuthHolder;
++    public isAuthorized = false;
++    public currentUserName = '';
++
++    public isAuthModalOpen = false;
++    public isRegisterMode = false;
++
++    public loginQuery = '';
++    public emailQuery = '';
++    public nameQuery = '';
++    public passwordQuery = '';
++    public confirmPasswordQuery = '';
++
++    public isLoading = false;
++    public isShowError = false;
++    public errorMessage = '';
++
++    private views = new Set<BaseView>();
++    private readonly loginUseCase: LoginUseCase;
++    private readonly registerUseCase: RegisterUseCase;
++    private readonly logoutUseCase: LogoutUseCase;
++    private readonly authHolder: AuthHolder;
+ 
+     public constructor(
+         loginUseCase: LoginUseCase,
+         registerUseCase: RegisterUseCase,
++        logoutUseCase: LogoutUseCase,
+         authHolder: AuthHolder,
+     ) {
+-        this.isAuthModalOpen = false;
+-
+-        this.nameQuery = '';
+-        this.emailQuery = '';
+-        this.passwordQuery = '';
+-        this.confirmPasswordQuery = '';
+-
+-        this.isRegisterMode = false;
+-        this.isSignInButtonVisible = true;
+-        this.isSignOutButtonVisible = false;
+-        this.isRegisterButtonVisible = false;
+-        this.isSwitchModeButtonVisible = true;
+-
+-        this.isShowError = false;
+-        this.errorMessage = '';
+-
+-        this.authStatus = 'is not authorized';
+-        this.isAuthStatusPositive = false;
+-
+         this.loginUseCase = loginUseCase;
+         this.registerUseCase = registerUseCase;
++        this.logoutUseCase = logoutUseCase;
+         this.authHolder = authHolder;
+ 
+         this.authHolder.addAuthListener(this);
++        this.syncWithAuthHolder();
+     }
+ 
+     // === BaseViewModel ===
+     public attachView = (baseView: BaseView): void => {
+-        this.baseView = baseView;
+-    };
+-
+-    public detachView = (): void => {
+-        this.baseView = undefined;
++        this.views.add(baseView);
++    };
++
++    public detachView = (baseView?: BaseView): void => {
++        if (baseView) this.views.delete(baseView);
++        else this.views.clear();
++    };
++
++    // === AuthListener ===
++    public onAuthChanged = (): void => {
++        this.syncWithAuthHolder();
++        this.notifyViewAboutChanges();
+     };
+ 
+     // === Модалка ===
+-    public openAuthModal = (): void => {
++    public openAuthModal = (registerMode = false): void => {
++        this.resetForm();
++        this.isRegisterMode = registerMode;
+         this.isAuthModalOpen = true;
+-        this.resetForm();
+         this.notifyViewAboutChanges();
+     };
+ 
+@@ -84,26 +75,19 @@
+         this.notifyViewAboutChanges();
+     };
+ 
+-    // === AuthListener ===
+-    public onAuthChanged = (): void => {
+-        if (this.authHolder.isUserAuthorized()) {
+-            this.isSignInButtonVisible = false;
+-            this.isSignOutButtonVisible = true;
+-            this.isRegisterButtonVisible = false;
+-            this.isSwitchModeButtonVisible = false;
+-            this.authStatus = 'authorized';
+-            this.isAuthStatusPositive = true;
+-        } else {
+-            this.isSignInButtonVisible = true;
+-            this.isSignOutButtonVisible = false;
+-            this.isRegisterButtonVisible = false;
+-            this.isSwitchModeButtonVisible = true;
+-            this.authStatus = 'is not authorized';
+-            this.isAuthStatusPositive = false;
+-        }
+-        this.notifyViewAboutChanges();
+-    };
+-
++    public onClickSwitchMode = (): void => {
++        this.isRegisterMode = !this.isRegisterMode;
++        this.passwordQuery = '';
++        this.confirmPasswordQuery = '';
++        this.clearError();
++        this.notifyViewAboutChanges();
++    };
++
++    // === Поля ===
++    public onLoginQueryChanged = (value: string): void => {
++        this.loginQuery = value;
++        this.notifyViewAboutChanges();
++    };
+ 
+     public onEmailQueryChanged = (value: string): void => {
+         this.emailQuery = value;
+@@ -125,91 +109,100 @@
+         this.notifyViewAboutChanges();
+     };
+ 
+-    // === Переключение режима ===
+-    public onClickSwitchMode = (): void => {
+-        this.isRegisterMode = !this.isRegisterMode;
+-        this.isSignInButtonVisible = !this.isRegisterMode && !this.authHolder.isUserAuthorized();
+-        this.isRegisterButtonVisible = this.isRegisterMode;
+-        this.isShowError = false;
+-        this.errorMessage = '';
+-        this.passwordQuery = '';
+-        this.nameQuery='';
+-        this.confirmPasswordQuery = '';
+-        this.notifyViewAboutChanges();
+-    };
+-
+-    // === Вход ===
++    // === Действия ===
++    public onSubmit = (): Promise<void> =>
++        this.isRegisterMode ? this.onClickRegister() : this.onClickSignIn();
++
+     public onClickSignIn = async (): Promise<void> => {
++        if (this.isLoading) return;
+         if (!this.validateLoginForm()) {
+             this.notifyViewAboutChanges();
+             return;
+         }
+ 
+-        try {
+-            await this.loginUseCase.loginUser(this.emailQuery, this.passwordQuery);
+-            this.isShowError = false;
+-            this.errorMessage = '';
+-            this.closeAuthModal();
+-        } catch (e) {
+-            this.errorMessage = e instanceof Error ? e.message : 'Ошибка входа';
+-            this.isShowError = true;
+-            this.notifyViewAboutChanges();
+-        }
+-    };
+-
+-    // === Регистрация ===
++        await this.runWithLoading(
++            () => this.loginUseCase.loginUser(this.loginQuery, this.passwordQuery),
++            'Не удалось войти',
++        );
++    };
++
+     public onClickRegister = async (): Promise<void> => {
++        if (this.isLoading) return;
+         if (!this.validateRegisterForm()) {
+             this.notifyViewAboutChanges();
+             return;
+         }
+ 
++        await this.runWithLoading(
++            () => this.registerUseCase.registerUser({
++                login: this.loginQuery,
++                email: this.emailQuery,
++                password: this.passwordQuery,
++                confirmPassword: this.confirmPasswordQuery,
++                firstName: this.nameQuery,
++            }),
++            'Не удалось зарегистрироваться',
++        );
++    };
++
++    public onClickSignOut = async (): Promise<void> => {
++        await this.logoutUseCase.logoutUser();
++    };
++
++    // === Вспомогательное ===
++    private runWithLoading = async (action: () => Promise<void>, fallbackError: string): Promise<void> => {
++        this.isLoading = true;
++        this.clearError();
++        this.notifyViewAboutChanges();
++
+         try {
+-            await this.registerUseCase.registerUser(this.emailQuery, this.passwordQuery);
+-            this.isShowError = false;
+-            this.errorMessage = '';
++            await action();
++            this.isLoading = false;
+             this.closeAuthModal();
+         } catch (e) {
+-            this.errorMessage = e instanceof Error ? e.message : 'Ошибка регистрации';
+-            this.isShowError = true;
++            this.isLoading = false;
++            this.setError(e instanceof Error && e.message ? e.message : fallbackError);
+             this.notifyViewAboutChanges();
+         }
+     };
+ 
+-    // === Выход ===
+-    public onClickSignOut = (): void => {
+-        this.authHolder.onSignOut();
+-    };
+-
+-    // === Валидация ===
++    private syncWithAuthHolder = (): void => {
++        const user = this.authHolder.getUser();
++        this.isAuthorized = this.authHolder.isUserAuthorized();
++        this.currentUserName = user ? (user.firstName || user.login) : '';
++    };
++
+     private validateLoginForm = (): boolean => {
+-        if (!this.emailQuery) {
+-            return this.setError('Email cannot be empty');
+-        }
+-        if (!FormValidator.isValidEmail(this.emailQuery)) {
+-            return this.setError('Email format is not valid');
++        if (!this.loginQuery.trim()) {
++            return this.setError('Введите логин или email');
+         }
+         if (!this.passwordQuery) {
+-            return this.setError('Password cannot be empty');
++            return this.setError('Введите пароль');
+         }
+         return this.clearError();
+     };
+ 
+     private validateRegisterForm = (): boolean => {
+-        if (!this.emailQuery) {
+-            return this.setError('Email cannot be empty');
+-        }
+-        if (!FormValidator.isValidEmail(this.emailQuery)) {
+-            return this.setError('Email format is not valid');
++        if (!this.loginQuery.trim()) {
++            return this.setError('Введите логин');
++        }
++        if (this.loginQuery.trim().length > 100) {
++            return this.setError('Логин должен быть не длиннее 100 символов');
++        }
++        if (!this.emailQuery.trim()) {
++            return this.setError('Введите email');
++        }
++        if (!FormValidator.isValidEmail(this.emailQuery.trim())) {
++            return this.setError('Некорректный формат email');
+         }
+         if (!this.passwordQuery) {
+-            return this.setError('Password cannot be empty');
++            return this.setError('Введите пароль');
+         }
+         if (this.passwordQuery.length < 6) {
+-            return this.setError('Password must be at least 6 characters');
++            return this.setError('Пароль должен содержать минимум 6 символов');
+         }
+         if (this.passwordQuery !== this.confirmPasswordQuery) {
+-            return this.setError('Passwords do not match');
++            return this.setError('Пароли не совпадают');
+         }
+         return this.clearError();
+     };
+@@ -227,18 +220,17 @@
+     };
+ 
+     private resetForm = (): void => {
++        this.loginQuery = '';
+         this.emailQuery = '';
++        this.nameQuery = '';
+         this.passwordQuery = '';
+         this.confirmPasswordQuery = '';
+-        this.isShowError = false;
+-        this.errorMessage = '';
+-        this.nameQuery = '';
+         this.isRegisterMode = false;
+-        this.isSignInButtonVisible = !this.authHolder.isUserAuthorized();
+-        this.isRegisterButtonVisible = false;
++        this.isLoading = false;
++        this.clearError();
+     };
+ 
+     private notifyViewAboutChanges = (): void => {
+-        this.baseView?.onViewModelChanged();
+-    };
+-}+        this.views.forEach((view) => view.onViewModelChanged());
++    };
++}
+--- a/bookswap/src/shared/config/routes.ts
++++ b/bookswap/src/shared/config/routes.ts
+@@ -18,11 +18,13 @@
+     addPost: {
+         path: '/posts/new',
+         component: AddPostPage,
+-        title: 'Новое объявление' },
++        title: 'Новое объявление',
++        requiresAuth: true },
+     usersPosts: {
+         path: 'profile',
+         component: UsersPostPage,
+-        title: 'Мои объявления' },
++        title: 'Мои объявления',
++        requiresAuth: true },
+ 
+ 
+ 
+--- a/bookswap/src/shared/ui/Input.tsx
++++ b/bookswap/src/shared/ui/Input.tsx
+@@ -9,6 +9,9 @@
+     value?: string;
+     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+     style?: 'base' | 'search';
++    /** Текст скрытой подписи для скринридеров */
++    label?: string;
++    autoComplete?: string;
+ }
+ 
+ const Input: React.FC<InputProps> = ({
+@@ -20,6 +23,8 @@
+                                          value,
+                                          onChange,
+                                          style = 'base',
++                                         label = 'Введите данные',
++                                         autoComplete,
+                                      }) => {
+     const styles = {
+         base: 'bg-gray rounded-12 py-22 px-20 text-16 placeholder:text-16',
+@@ -29,7 +34,7 @@
+     return (
+         <>
+             <label className="visually-hidden" htmlFor={id}>
+-                Введите данные
++                {label}
+             </label>
+             <input
+                 name={name}
+@@ -39,10 +44,11 @@
+                 id={id}
+                 value={value}
+                 onChange={onChange}
++                autoComplete={autoComplete}
+                 className={styles[style]}
+             />
+         </>
+     );
+ };
+ 
+-export default Input;+export default Input;
+--- a/bookswap/src/widgets/Header.tsx
++++ b/bookswap/src/widgets/Header.tsx
+@@ -3,13 +3,13 @@
+ import Typography from '../shared/ui/Typography';
+ import { ROUTES } from '../shared/config/routes';
+ import Button from '../shared/ui/Button';
+-import AuthModal from '../presentation/view/auth/AuthModal';
+ import { authViewModel } from '../di';
++import useAuthViewModel from '../presentation/hooks/useAuthViewModel';
+ 
+ const Header: React.FC = () => {
+     const location = useLocation();
+     const [pageTitle, setPageTitle] = useState('Каталог');
+-    const [isAuthOpen, setIsAuthOpen] = useState(false);
++    const auth = useAuthViewModel(authViewModel);
+ 
+     useEffect(() => {
+         let foundTitle = 'Страница не найдена';
+@@ -38,19 +38,22 @@
+                     </div>
+ 
+                     <div className="flex items-center gap-20">
+-                        <Button onClick={() => setIsAuthOpen(true)}>Войти</Button>
++                        {auth.isAuthorized ? (
++                            <>
++                                <span className="font-bold" title="Вы вошли в аккаунт">
++                                    {auth.currentUserName}
++                                </span>
++                                <Button onClick={() => void auth.onClickSignOut()}>Выйти</Button>
++                            </>
++                        ) : (
++                            <Button onClick={() => auth.openAuthModal()}>Войти</Button>
++                        )}
+                         {/* ... иконки ... */}
+                     </div>
+                 </div>
+             </div>
+-
+-            <AuthModal
+-                isOpen={isAuthOpen}
+-                onClose={() => setIsAuthOpen(false)}
+-                authViewModel={authViewModel}
+-            />
+         </header>
+     );
+ };
+ 
+-export default Header;+export default Header;
+--- a/BookswapAPI/BookswapAPI/Program.cs
++++ b/BookswapAPI/BookswapAPI/Program.cs
+@@ -1,9 +1,12 @@
++using System.Text;
+ using BookswapAPI.Data;
+ using BookswapAPI.Services.Advertisement;
+ using BookswapAPI.Services.Auth;
+ using BookswapAPI.Services.Book;
+ using BookswapAPI.Services.JWT;
++using Microsoft.AspNetCore.Authentication.JwtBearer;
+ using Microsoft.EntityFrameworkCore;
++using Microsoft.IdentityModel.Tokens;
+ using Scalar.AspNetCore;
+ 
+ var builder = WebApplication.CreateBuilder(args);
+@@ -23,6 +26,28 @@
+ builder.Services.AddScoped<IAdvertisementService, AdvertisementService>();
+ builder.Services.AddScoped<IJwtService, JwtService>();
+ builder.Services.AddScoped<IAuthService, AuthService>();
++
++// --- JWT-аутентификация ---
++var jwtSecret = builder.Configuration["Jwt:Secret"]
++    ?? throw new InvalidOperationException("Jwt:Secret не задан в appsettings.json");
++
++builder.Services
++    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
++    .AddJwtBearer(options =>
++    {
++        options.TokenValidationParameters = new TokenValidationParameters
++        {
++            ValidateIssuer = true,
++            ValidIssuer = builder.Configuration["Jwt:Issuer"],
++            ValidateAudience = true,
++            ValidAudience = builder.Configuration["Jwt:Audience"],
++            ValidateIssuerSigningKey = true,
++            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
++            ValidateLifetime = true,
++            ClockSkew = TimeSpan.FromSeconds(30)
++        };
++    });
++builder.Services.AddAuthorization();
+ 
+ builder.Services.AddCors(options =>
+ {
+@@ -47,6 +72,8 @@
+ }
+ 
+ app.UseCors("AllowFrontend");
++app.UseAuthentication();
++app.UseAuthorization();
+ 
+ if (app.Environment.IsDevelopment())
+ {
+--- a/BookswapAPI/BookswapAPI/appsettings.json
++++ b/BookswapAPI/BookswapAPI/appsettings.json
+@@ -6,6 +6,13 @@
+     }
+   },
+   "AllowedHosts": "*",
++  "Jwt": {
++    "Secret": "13OFhREtdJlK3fDnXrEENMCYV6xh4IADADWccJLwbXw8J8x1uPC_6FeqHVlIS3nc",
++    "Issuer": "BookswapAPI",
++    "Audience": "BookswapClient",
++    "AccessTokenExpiryMinutes": 15,
++    "RefreshTokenExpiryDays": 7
++  },
+   "ConnectionStrings": {
+     "DefaultConnection": "Host=localhost;Port=5432;Database=bookswap;Username=postgres;Password=3009"
+   }
+--- a/BookswapAPI/BookswapAPI/Services/Auth/AuthService.cs
++++ b/BookswapAPI/BookswapAPI/Services/Auth/AuthService.cs
+@@ -83,9 +83,12 @@
+         LoginDto dto, 
+         CancellationToken cancellationToken = default)
+     {
+-        var user = await _context.Users
+-            .FirstOrDefaultAsync(
+-                u => u.Login == dto.Login && !u.IsDeleted, 
++        // Входить можно как по логину, так и по email (email без учёта регистра)
++        var loginOrEmail = dto.Login.Trim();
++        var emailLower = loginOrEmail.ToLower();
++        var user = await _context.Users
++            .FirstOrDefaultAsync(
++                u => (u.Login == loginOrEmail || u.Email.ToLower() == emailLower) && !u.IsDeleted, 
+                 cancellationToken); 
+ 
+         if (user == null)
+--- a/BookswapAPI/BookswapAPI/Models/DTOs/LoginDto.cs
++++ b/BookswapAPI/BookswapAPI/Models/DTOs/LoginDto.cs
+@@ -4,6 +4,7 @@
+ 
+ public class LoginDto
+ {
++    /// <summary>Логин или email</summary>
+     [Required]
+     public string Login { get; set; }
+ 
+--- a/BookswapAPI/BookswapAPI/BookswapAPI.csproj
++++ b/BookswapAPI/BookswapAPI/BookswapAPI.csproj
+@@ -8,7 +8,7 @@
+ 
+     <ItemGroup>
+         <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.19" />
++        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
+         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+         <PackageReference Include="Scalar.AspNetCore" Version="2.17.2" />

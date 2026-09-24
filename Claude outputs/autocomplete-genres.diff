@@ -1,0 +1,1136 @@
+--- a/BookswapAPI/BookswapAPI/Controllers/AdvertisementController.cs
++++ b/BookswapAPI/BookswapAPI/Controllers/AdvertisementController.cs
+@@ -43,8 +43,15 @@
+     public async Task<IActionResult> CreateAdvertisement([FromBody] CreateAdvertisementRequestDto advertisement,
+         CancellationToken cancellationToken)
+     {
+-        var post = _advertisementService.CreateAdvertisementAsync(advertisement, cancellationToken);
+-        return Ok(await post);
++        try
++        {
++            var post = await _advertisementService.CreateAdvertisementAsync(advertisement, cancellationToken);
++            return Ok(post);
++        }
++        catch (ArgumentException ex)
++        {
++            return BadRequest(new { message = ex.Message });
++        }
+     }
+     
+     
+--- a/BookswapAPI/BookswapAPI/Controllers/BooksController.cs
++++ b/BookswapAPI/BookswapAPI/Controllers/BooksController.cs
+@@ -35,6 +35,28 @@
+         });
+     }
+ 
++    /// <summary>
++    /// Подсказки для автозаполнения: type=title (книги) или type=author (авторы).
++    /// Для type=title можно передать author, чтобы искать книги только этого автора.
++    /// </summary>
++    [HttpGet("suggest")]
++    public async Task<IActionResult> Suggest(
++        [FromQuery] string q,
++        [FromQuery] string type = "title",
++        [FromQuery] string? author = null,
++        [FromQuery] int limit = 8,
++        CancellationToken cancellationToken = default)
++    {
++        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
++            return Ok(Array.Empty<object>());
++
++        if (type != "title" && type != "author")
++            return BadRequest(new { message = "type должен быть title или author" });
++
++        var suggestions = await _bookService.SuggestAsync(q.Trim(), type, author?.Trim(), limit, cancellationToken);
++        return Ok(suggestions);
++    }
++
+     [HttpGet("isbn/{isbn}")]
+     public async Task<IActionResult> GetBookByIsbn(string isbn)
+     {
+--- /dev/null
++++ b/BookswapAPI/BookswapAPI/Controllers/GenreController.cs
+@@ -0,0 +1,19 @@
++using BookswapAPI.Services.Genres;
++using Microsoft.AspNetCore.Mvc;
++
++namespace BookswapAPI.Controllers;
++
++[ApiController]
++[Route("api/[controller]")]
++public class GenreController(IGenreService genreService) : ControllerBase
++{
++    /// <summary>
++    /// Список жанров для выпадающего списка
++    /// </summary>
++    [HttpGet("getAll")]
++    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
++    {
++        var genres = await genreService.GetAllAsync(cancellationToken);
++        return Ok(genres);
++    }
++}
+--- /dev/null
++++ b/BookswapAPI/BookswapAPI/Models/DTOs/Book/BookSuggestionDto.cs
+@@ -0,0 +1,12 @@
++namespace BookswapAPI.Models.DTOs.Book;
++
++/// <summary>
++/// Подсказка для автозаполнения полей «Название книги» и «Автор»
++/// </summary>
++public class BookSuggestionDto
++{
++    public string Title { get; set; } = string.Empty;
++    public string Author { get; set; } = string.Empty;
++    public string? Year { get; set; }
++    public string? CoverUrl { get; set; }
++}
+--- /dev/null
++++ b/BookswapAPI/BookswapAPI/Models/DTOs/Book/OpenLibraryAuthorsResponse.cs
+@@ -0,0 +1,24 @@
++using System.Text.Json.Serialization;
++
++namespace BookswapAPI.Models.DTOs.Book;
++
++/// <summary>
++/// Ответ https://openlibrary.org/search/authors.json
++/// </summary>
++public class OpenLibraryAuthorsResponse
++{
++    [JsonPropertyName("docs")]
++    public List<OpenLibraryAuthorDoc>? Docs { get; set; }
++}
++
++public class OpenLibraryAuthorDoc
++{
++    [JsonPropertyName("name")]
++    public string? Name { get; set; }
++
++    [JsonPropertyName("top_work")]
++    public string? TopWork { get; set; }
++
++    [JsonPropertyName("work_count")]
++    public int? WorkCount { get; set; }
++}
+--- /dev/null
++++ b/BookswapAPI/BookswapAPI/Models/DTOs/Genres/GenreDto.cs
+@@ -0,0 +1,7 @@
++namespace BookswapAPI.Models.DTOs.Genres;
++
++public class GenreDto
++{
++    public Guid Id { get; set; }
++    public string Name { get; set; } = string.Empty;
++}
+--- a/BookswapAPI/BookswapAPI/Program.cs
++++ b/BookswapAPI/BookswapAPI/Program.cs
+@@ -3,6 +3,7 @@
+ using BookswapAPI.Services.Advertisement;
+ using BookswapAPI.Services.Auth;
+ using BookswapAPI.Services.Book;
++using BookswapAPI.Services.Genres;
+ using BookswapAPI.Services.JWT;
+ using Microsoft.AspNetCore.Authentication.JwtBearer;
+ using Microsoft.EntityFrameworkCore;
+@@ -26,6 +27,7 @@
+ builder.Services.AddScoped<IAdvertisementService, AdvertisementService>();
+ builder.Services.AddScoped<IJwtService, JwtService>();
+ builder.Services.AddScoped<IAuthService, AuthService>();
++builder.Services.AddScoped<IGenreService, GenreService>();
+ 
+ // --- JWT-аутентификация ---
+ var jwtSecret = builder.Configuration["Jwt:Secret"]
+--- a/BookswapAPI/BookswapAPI/Services/Advertisement/AdvertisementService.cs
++++ b/BookswapAPI/BookswapAPI/Services/Advertisement/AdvertisementService.cs
+@@ -99,6 +99,11 @@
+         {
+             cancellationToken.ThrowIfCancellationRequested();
+ 
++            var genreExists = await context.Genres
++                .AnyAsync(g => g.Id == request.GenreId && !g.IsDeleted, cancellationToken);
++            if (!genreExists)
++                throw new ArgumentException("Выберите жанр из списка");
++
+             var advertisement = new Models.Advertisement
+             {
+                 Id = Guid.NewGuid(),
+@@ -106,7 +111,7 @@
+                 Description = request.Description,
+                 TitleBook= request.BookTitle,
+                 Author = request.AuthorName,
+-                GenreId = new Guid("2abe7c67-6991-4e0c-ba6c-33152842e5ce"), //временно
++                GenreId = request.GenreId,
+                 IsNew = request.IsNew,
+                 IsForever = request.IsForever,
+                 IsPostamat = request.IsPostamat,
+--- a/BookswapAPI/BookswapAPI/Services/Book/BookService.cs
++++ b/BookswapAPI/BookswapAPI/Services/Book/BookService.cs
+@@ -117,6 +117,68 @@
+         }
+     }
+ 
++    public async Task<List<BookSuggestionDto>> SuggestAsync(
++        string query,
++        string type,
++        string? author = null,
++        int limit = 8,
++        CancellationToken cancellationToken = default)
++    {
++        limit = Math.Clamp(limit, 1, 20);
++        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
++
++        try
++        {
++            if (string.Equals(type, "author", StringComparison.OrdinalIgnoreCase))
++            {
++                var url = $"search/authors.json?q={Uri.EscapeDataString(query)}&limit={limit}";
++                var json = await _httpClient.GetStringAsync(url, cancellationToken);
++                var data = JsonSerializer.Deserialize<OpenLibraryAuthorsResponse>(json, options);
++
++                return (data?.Docs ?? [])
++                    .Where(a => !string.IsNullOrWhiteSpace(a.Name))
++                    .OrderByDescending(a => a.WorkCount ?? 0)
++                    .DistinctBy(a => a.Name!.Trim().ToLowerInvariant())
++                    .Select(a => new BookSuggestionDto
++                    {
++                        Author = a.Name!.Trim(),
++                        Title = a.TopWork ?? string.Empty
++                    })
++                    .ToList();
++            }
++
++            // Поиск книг по названию; поле fields уменьшает ответ OpenLibrary и ускоряет подсказки
++            var bookUrl = $"search.json?title={Uri.EscapeDataString(query)}" +
++                          (string.IsNullOrWhiteSpace(author) ? "" : $"&author={Uri.EscapeDataString(author)}") +
++                          $"&fields=title,author_name,first_publish_year,cover_i&limit={limit * 2}";
++            var bookJson = await _httpClient.GetStringAsync(bookUrl, cancellationToken);
++            var books = JsonSerializer.Deserialize<OpenLibraryResponse>(bookJson, options);
++
++            return (books?.Docs ?? [])
++                .Where(d => !string.IsNullOrWhiteSpace(d.Title))
++                .Select(d => new BookSuggestionDto
++                {
++                    Title = d.Title.Trim(),
++                    Author = d.AuthorNames?.FirstOrDefault() ?? string.Empty,
++                    Year = d.FirstPublishYear?.ToString(),
++                    CoverUrl = GetCoverUrl(d.CoverId, "S")
++                })
++                .DistinctBy(s => (s.Title.ToLowerInvariant(), s.Author.ToLowerInvariant()))
++                .Take(limit)
++                .ToList();
++        }
++        catch (HttpRequestException)
++        {
++            // OpenLibrary недоступна — просто не показываем подсказки
++            return [];
++        }
++        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
++        {
++            // таймаут запроса к OpenLibrary
++            return [];
++        }
++    }
++
+     public async Task<int> GetTotalCountAsync(string query)
+     {
+         try
+--- a/BookswapAPI/BookswapAPI/Services/Book/IBookService.cs
++++ b/BookswapAPI/BookswapAPI/Services/Book/IBookService.cs
+@@ -32,4 +32,16 @@
+     /// Получение количества найденных книг
+     /// </summary>
+     Task<int> GetTotalCountAsync(string query);
++
++    /// <summary>
++    /// Подсказки для автозаполнения.
++    /// type = "title" — книги по названию (можно сузить по автору),
++    /// type = "author" — авторы по имени.
++    /// </summary>
++    Task<List<BookSuggestionDto>> SuggestAsync(
++        string query,
++        string type,
++        string? author = null,
++        int limit = 8,
++        CancellationToken cancellationToken = default);
+ }
+--- /dev/null
++++ b/BookswapAPI/BookswapAPI/Services/Genres/GenreService.cs
+@@ -0,0 +1,18 @@
++using BookswapAPI.Data;
++using BookswapAPI.Models.DTOs.Genres;
++using Microsoft.EntityFrameworkCore;
++
++namespace BookswapAPI.Services.Genres;
++
++public class GenreService(AppDbContext context) : IGenreService
++{
++    public async Task<IReadOnlyList<GenreDto>> GetAllAsync(CancellationToken cancellationToken = default)
++    {
++        return await context.Genres
++            .AsNoTracking()
++            .Where(g => !g.IsDeleted)
++            .OrderBy(g => g.Name)
++            .Select(g => new GenreDto { Id = g.Id, Name = g.Name })
++            .ToListAsync(cancellationToken);
++    }
++}
+--- /dev/null
++++ b/BookswapAPI/BookswapAPI/Services/Genres/IGenreService.cs
+@@ -0,0 +1,11 @@
++using BookswapAPI.Models.DTOs.Genres;
++
++namespace BookswapAPI.Services.Genres;
++
++public interface IGenreService
++{
++    /// <summary>
++    /// Все (не удалённые) жанры, отсортированные по названию
++    /// </summary>
++    Task<IReadOnlyList<GenreDto>> GetAllAsync(CancellationToken cancellationToken = default);
++}
+--- /dev/null
++++ b/bookswap/src/data/book/BookApiRepository.ts
+@@ -0,0 +1,24 @@
++import type BookRepository from '../../domain/repository/book/BookRepository.ts';
++import type {BookSuggestion} from '../../domain/entity/book/BookSuggestion.ts';
++
++/** Подсказки из BooksController (api/Books/suggest), который ходит в OpenLibrary */
++export default class BookApiRepository implements BookRepository {
++    private readonly baseUrl = `${import.meta.env.VITE_API_URL ?? ''}/api/Books`;
++
++    public suggestTitles(query: string, author?: string, signal?: AbortSignal): Promise<BookSuggestion[]> {
++        const params = new URLSearchParams({q: query, type: 'title'});
++        if (author) params.set('author', author);
++        return this.request(params, signal);
++    }
++
++    public suggestAuthors(query: string, signal?: AbortSignal): Promise<BookSuggestion[]> {
++        return this.request(new URLSearchParams({q: query, type: 'author'}), signal);
++    }
++
++    private async request(params: URLSearchParams, signal?: AbortSignal): Promise<BookSuggestion[]> {
++        const response = await fetch(`${this.baseUrl}/suggest?${params.toString()}`, {signal});
++        if (!response.ok) throw new Error(`Не удалось загрузить подсказки (${response.status})`);
++        const data = (await response.json()) as BookSuggestion[];
++        return Array.isArray(data) ? data : [];
++    }
++}
+--- /dev/null
++++ b/bookswap/src/data/genre/GenreApiRepository.ts
+@@ -0,0 +1,30 @@
++import type GenreRepository from '../../domain/repository/genre/GenreRepository.ts';
++import type {Genre} from '../../domain/entity/genre/Genre.ts';
++
++/** Жанры из БД (api/Genre/getAll). Список кешируется — жанры меняются редко */
++export default class GenreApiRepository implements GenreRepository {
++    private readonly baseUrl = `${import.meta.env.VITE_API_URL ?? ''}/api/Genre`;
++    private cache: Promise<Genre[]> | null = null;
++
++    public getAll(): Promise<Genre[]> {
++        if (!this.cache) {
++            this.cache = this.load().catch((e) => {
++                this.cache = null; // при ошибке даём попробовать ещё раз
++                throw e;
++            });
++        }
++        return this.cache;
++    }
++
++    private async load(): Promise<Genre[]> {
++        let response: Response;
++        try {
++            response = await fetch(`${this.baseUrl}/getAll`);
++        } catch {
++            throw new Error('Сервер недоступен — не удалось загрузить жанры');
++        }
++        if (!response.ok) throw new Error(`Не удалось загрузить жанры (${response.status})`);
++        const data = (await response.json()) as Genre[];
++        return data.map((g) => ({id: g.id, name: g.name}));
++    }
++}
+--- a/bookswap/src/data/post/PostApiRepository.tsx
++++ b/bookswap/src/data/post/PostApiRepository.tsx
+@@ -71,7 +71,7 @@
+             isPostamat:  true,
+             city: dto.city,
+             sellerId: "446b6c74-9d7d-4500-86b6-92b02867b27c",
+-            genreId: "2abe7c67-6991-4e0c-ba6c-33152842e5ce",
++            genreId: dto.genreId,
+ 
+             street: dto.street,
+             houseNumber: dto.houseNumber,
+--- a/bookswap/src/di.ts
++++ b/bookswap/src/di.ts
+@@ -15,6 +15,12 @@
+ import UpdatePostUseCase from "./domain/interactors/post/UpdatePostUseCase.tsx";
+ import CreatePostUseCase from "./domain/interactors/post/CreateNewPostUseCase";
+ 
++// --- Book / Genre ---
++import BookApiRepository from './data/book/BookApiRepository';
++import GenreApiRepository from './data/genre/GenreApiRepository';
++import SuggestBooksUseCase from './domain/interactors/book/SuggestBooksUseCase';
++import GetGenresUseCase from './domain/interactors/genre/GetGenresUseCase';
++
+ // --- Domain state ---
+ export const authHolder = new AuthHolder();          // синглтон — общий state, восстанавливается из localStorage
+ 
+@@ -22,6 +28,8 @@
+ const authRepository = new AuthApi();                // для работы без бэкенда: new AuthFakeApi()
+ export const httpClient = new AuthorizedHttpClient(authHolder, authRepository);
+ const postRepository = new PostApiRepository(httpClient);
++const bookRepository = new BookApiRepository();
++const genreRepository = new GenreApiRepository();
+ 
+ // --- Use cases ---
+ export const loginUseCase = new LoginUseCase(authRepository, authHolder);
+@@ -34,5 +42,8 @@
+ export const createPostUsecase = new CreatePostUseCase(postRepository);
+ export const updatePostUsecase = new UpdatePostUseCase(postRepository);
+ 
++export const suggestBooksUseCase = new SuggestBooksUseCase(bookRepository);
++export const getGenresUseCase = new GetGenresUseCase(genreRepository);
++
+ // --- View models ---
+ export const authViewModel = new AuthViewModelImpl(loginUseCase, registerUseCase, logoutUseCase, authHolder);
+--- /dev/null
++++ b/bookswap/src/domain/entity/book/BookSuggestion.ts
+@@ -0,0 +1,7 @@
++/** Подсказка автозаполнения (книга или автор) — соответствует BookSuggestionDto на бэкенде */
++export interface BookSuggestion {
++    title: string;
++    author: string;
++    year?: string | null;
++    coverUrl?: string | null;
++}
+--- /dev/null
++++ b/bookswap/src/domain/entity/genre/Genre.ts
+@@ -0,0 +1,4 @@
++export interface Genre {
++    id: string;
++    name: string;
++}
+--- /dev/null
++++ b/bookswap/src/domain/interactors/book/SuggestBooksUseCase.ts
+@@ -0,0 +1,18 @@
++import type BookRepository from '../../repository/book/BookRepository.ts';
++import type {BookSuggestion} from '../../entity/book/BookSuggestion.ts';
++
++export default class SuggestBooksUseCase {
++    private readonly bookRepository: BookRepository;
++
++    public constructor(bookRepository: BookRepository) {
++        this.bookRepository = bookRepository;
++    }
++
++    public suggestTitles(query: string, author?: string, signal?: AbortSignal): Promise<BookSuggestion[]> {
++        return this.bookRepository.suggestTitles(query.trim(), author?.trim() || undefined, signal);
++    }
++
++    public suggestAuthors(query: string, signal?: AbortSignal): Promise<BookSuggestion[]> {
++        return this.bookRepository.suggestAuthors(query.trim(), signal);
++    }
++}
+--- /dev/null
++++ b/bookswap/src/domain/interactors/genre/GetGenresUseCase.ts
+@@ -0,0 +1,14 @@
++import type GenreRepository from '../../repository/genre/GenreRepository.ts';
++import type {Genre} from '../../entity/genre/Genre.ts';
++
++export default class GetGenresUseCase {
++    private readonly genreRepository: GenreRepository;
++
++    public constructor(genreRepository: GenreRepository) {
++        this.genreRepository = genreRepository;
++    }
++
++    public execute(): Promise<Genre[]> {
++        return this.genreRepository.getAll();
++    }
++}
+--- /dev/null
++++ b/bookswap/src/domain/repository/book/BookRepository.ts
+@@ -0,0 +1,9 @@
++import type {BookSuggestion} from '../../entity/book/BookSuggestion.ts';
++
++export default interface BookRepository {
++    /** Книги по названию (опционально — только указанного автора) */
++    suggestTitles(query: string, author?: string, signal?: AbortSignal): Promise<BookSuggestion[]>;
++
++    /** Авторы по имени */
++    suggestAuthors(query: string, signal?: AbortSignal): Promise<BookSuggestion[]>;
++}
+--- /dev/null
++++ b/bookswap/src/domain/repository/genre/GenreRepository.ts
+@@ -0,0 +1,5 @@
++import type {Genre} from '../../entity/genre/Genre.ts';
++
++export default interface GenreRepository {
++    getAll(): Promise<Genre[]>;
++}
+--- a/bookswap/src/pages/AddPostPage/AddPostPage.tsx
++++ b/bookswap/src/pages/AddPostPage/AddPostPage.tsx
+@@ -1,7 +1,7 @@
+ import React, {useMemo} from 'react';
+ import {useNavigate} from "react-router-dom";
+ import PostFormViewModelImpl from "../../presentation/view-model/post/form/PostFormViewModelImpl.tsx";
+-import {createPostUsecase, updatePostUsecase} from "../../di.ts";
++import {createPostUsecase, getGenresUseCase, suggestBooksUseCase, updatePostUsecase} from "../../di.ts";
+ import PostFormComponent from "../../presentation/view/post/PostFormComponent.tsx";
+ 
+ 
+@@ -10,7 +10,7 @@
+     const navigate = useNavigate();
+ 
+     const viewModel = useMemo(
+-        () => new PostFormViewModelImpl(createPostUsecase, updatePostUsecase),
++        () => new PostFormViewModelImpl(createPostUsecase, updatePostUsecase, suggestBooksUseCase, getGenresUseCase),
+         [],
+     );
+     return (
+--- a/bookswap/src/presentation/view/post/PostFormComponent.tsx
++++ b/bookswap/src/presentation/view/post/PostFormComponent.tsx
+@@ -4,6 +4,9 @@
+ import Typography from '../../../shared/ui/Typography';
+ import Input from '../../../shared/ui/Input';
+ import Button from '../../../shared/ui/Button';
++import Autocomplete from '../../../shared/ui/Autocomplete';
++import Combobox from '../../../shared/ui/Combobox';
++import type { BookSuggestion } from '../../../domain/entity/book/BookSuggestion';
+ 
+ interface Props {
+     viewModel: PostFormViewModelImpl;
+@@ -24,6 +27,10 @@
+     }, [baseView, viewModel]);
+ 
+     useEffect(() => {
++        void viewModel.loadGenres();
++    }, [viewModel]);
++
++    useEffect(() => {
+         if (viewModel.isSuccess) onSuccess?.();
+     }, [viewModel.isSuccess, onSuccess]);
+ 
+@@ -49,14 +56,18 @@
+ 
+             {/* Название книги */}
+             <div className="flex flex-col gap-14">
+-                <Typography variant="label" weight="bold">Название книги</Typography>
+-                <Input
+-                    style="base"
++                <Typography variant="label" weight="bold" htmlFor="bookTitle">Название книги</Typography>
++                <Autocomplete<BookSuggestion>
++                    id="bookTitle"
+                     name="bookTitle"
+-                    id="bookTitle"
+-                    type="text"
++                    label="Название книги"
++                    placeholder="Начните вводить название"
+                     value={viewModel.bookTitle}
+-                    onChange={(e) => viewModel.onChangeBookTitle(e.target.value)}
++                    onChange={viewModel.onChangeBookTitle}
++                    fetchSuggestions={viewModel.suggestBookTitles}
++                    onSelect={viewModel.onSelectBookSuggestion}
++                    getKey={(b, i) => `${b.title}|${b.author}|${i}`}
++                    renderItem={renderBookSuggestion}
+                 />
+             </div>
+ 
+@@ -83,14 +94,18 @@
+ 
+             {/* Автор */}
+             <div className="flex flex-col gap-14">
+-                <Typography variant="label" weight="bold">Автор</Typography>
+-                <Input
+-                    style="base"
++                <Typography variant="label" weight="bold" htmlFor="authorName">Автор</Typography>
++                <Autocomplete<BookSuggestion>
++                    id="authorName"
+                     name="authorName"
+-                    id="authorName"
+-                    type="text"
++                    label="Автор"
++                    placeholder="Начните вводить имя автора"
+                     value={viewModel.authorName}
+-                    onChange={(e) => viewModel.onChangeAuthorName(e.target.value)}
++                    onChange={viewModel.onChangeAuthorName}
++                    fetchSuggestions={viewModel.suggestAuthors}
++                    onSelect={viewModel.onSelectAuthorSuggestion}
++                    getKey={(a, i) => `${a.author}|${i}`}
++                    renderItem={renderAuthorSuggestion}
+                 />
+             </div>
+ 
+@@ -151,14 +166,17 @@
+ 
+             {/* Жанр */}
+             <div className="flex flex-col gap-14">
+-                <Typography variant="label" weight="bold">ID жанра (GUID)</Typography>
+-                <Input
+-                    style="base"
+-                    name="genreId"
++                <Typography variant="label" weight="bold" htmlFor="genreId">Жанр</Typography>
++                <Combobox
+                     id="genreId"
+-                    type="text"
+-                    value={viewModel.genreId}
+-                    onChange={(e) => viewModel.onChangeGenreId(e.target.value)}
++                    label="Жанр"
++                    placeholder="Выберите жанр"
++                    options={viewModel.genres}
++                    selectedId={viewModel.genreId}
++                    onSelect={viewModel.onChangeGenreId}
++                    isLoading={viewModel.isGenresLoading}
++                    error={viewModel.genresError}
++                    onRetry={() => void viewModel.loadGenres()}
+                 />
+             </div>
+ 
+@@ -245,4 +263,25 @@
+     );
+ };
+ 
++const renderBookSuggestion = (b: BookSuggestion) => (
++    <div className="flex items-center gap-10">
++        {b.coverUrl
++            ? <img src={b.coverUrl} alt="" className="w-8 h-12 object-cover rounded shrink-0" loading="lazy" />
++            : <div className="w-8 h-12 rounded bg-gray shrink-0" />}
++        <div className="min-w-0">
++            <div className="font-bold truncate">{b.title}</div>
++            <div className="text-black/60 truncate">
++                {[b.author, b.year].filter(Boolean).join(' · ')}
++            </div>
++        </div>
++    </div>
++);
++
++const renderAuthorSuggestion = (a: BookSuggestion) => (
++    <div className="min-w-0">
++        <div className="font-bold truncate">{a.author}</div>
++        {a.title && <div className="text-black/60 truncate">Известная книга: {a.title}</div>}
++    </div>
++);
++
+ export default PostFormComponent;
+--- a/bookswap/src/presentation/view-model/post/form/PostFormViewModel.tsx
++++ b/bookswap/src/presentation/view-model/post/form/PostFormViewModel.tsx
+@@ -1,6 +1,8 @@
+ 
+ import type { Post } from '../../../../domain/entity/post/models/Post';
+ import type BaseViewModel from "../../BaseViewModel.tsx";
++import type {BookSuggestion} from '../../../../domain/entity/book/BookSuggestion.ts';
++import type {Genre} from '../../../../domain/entity/genre/Genre.ts';
+ 
+ export default interface PostFormViewModel extends BaseViewModel {
+     title: string;
+@@ -23,6 +25,18 @@
+     isEditMode: boolean;
+     isSuccess: boolean;
+ 
++    // --- жанры (из БД) ---
++    genres: Genre[];
++    isGenresLoading: boolean;
++    genresError: string;
++    loadGenres: () => Promise<void>;
++
++    // --- автозаполнение книги и автора ---
++    suggestBookTitles: (query: string, signal: AbortSignal) => Promise<BookSuggestion[]>;
++    suggestAuthors: (query: string, signal: AbortSignal) => Promise<BookSuggestion[]>;
++    onSelectBookSuggestion: (suggestion: BookSuggestion) => void;
++    onSelectAuthorSuggestion: (suggestion: BookSuggestion) => void;
++
+     onChangeTitle: (v: string) => void;
+     onChangeAuthorName: (v: string) => void;
+     onChangeDescription: (v: string) => void;
+--- a/bookswap/src/presentation/view-model/post/form/PostFormViewModelImpl.tsx
++++ b/bookswap/src/presentation/view-model/post/form/PostFormViewModelImpl.tsx
+@@ -3,6 +3,10 @@
+ import type CreatePostUseCase from '../../../../domain/interactors/post/CreateNewPostUseCase';
+ import type UpdatePostUseCase from '../../../../domain/interactors/post/UpdatePostUseCase';
+ import type { Post } from '../../../../domain/entity/post/models/Post';
++import type SuggestBooksUseCase from '../../../../domain/interactors/book/SuggestBooksUseCase';
++import type GetGenresUseCase from '../../../../domain/interactors/genre/GetGenresUseCase';
++import type { BookSuggestion } from '../../../../domain/entity/book/BookSuggestion';
++import type { Genre } from '../../../../domain/entity/genre/Genre';
+ 
+ export default class PostFormViewModelImpl implements PostFormViewModel {
+     public title = '';
+@@ -25,18 +29,28 @@
+     public isSuccess = false;
+     public isEditMode: boolean;
+ 
++    public genres: Genre[] = [];
++    public isGenresLoading = false;
++    public genresError = '';
++
+     private baseView?: BaseView;
+     private readonly createPostUseCase: CreatePostUseCase;
+     private readonly updatePostUseCase: UpdatePostUseCase;
++    private readonly suggestBooksUseCase: SuggestBooksUseCase;
++    private readonly getGenresUseCase: GetGenresUseCase;
+     private readonly postId?: string;
+ 
+     public constructor(
+         createPostUseCase: CreatePostUseCase,
+         updatePostUseCase: UpdatePostUseCase,
++        suggestBooksUseCase: SuggestBooksUseCase,
++        getGenresUseCase: GetGenresUseCase,
+         postId?: string,
+     ) {
+         this.createPostUseCase = createPostUseCase;
+         this.updatePostUseCase = updatePostUseCase;
++        this.suggestBooksUseCase = suggestBooksUseCase;
++        this.getGenresUseCase = getGenresUseCase;
+         this.postId = postId;
+         this.isEditMode = Boolean(postId);
+     }
+@@ -75,7 +89,52 @@
+     public onChangeHouseNumber = (v: string): void => { this.houseNumber = v; this.notifyViewAboutChanges(); };
+     public onChangeOwnerId = (v: string): void => { this.ownerId = v; this.notifyViewAboutChanges(); };
+ 
++    // === Жанры ===
++    public loadGenres = async (): Promise<void> => {
++        if (this.isGenresLoading) return;
++        this.isGenresLoading = true;
++        this.genresError = '';
++        this.notifyViewAboutChanges();
++
++        try {
++            this.genres = await this.getGenresUseCase.execute();
++        } catch (e) {
++            this.genresError = e instanceof Error ? e.message : 'Не удалось загрузить жанры';
++        } finally {
++            this.isGenresLoading = false;
++        }
++        this.notifyViewAboutChanges();
++    };
++
++    // === Автозаполнение ===
++    /** Книги по названию; если автор уже введён — только его книги */
++    public suggestBookTitles = (query: string, signal: AbortSignal): Promise<BookSuggestion[]> =>
++        this.suggestBooksUseCase.suggestTitles(query, this.authorName, signal);
++
++    public suggestAuthors = (query: string, signal: AbortSignal): Promise<BookSuggestion[]> =>
++        this.suggestBooksUseCase.suggestAuthors(query, signal);
++
++    /** Выбрана книга: подставляем название, автора и (если пусто) заголовок объявления */
++    public onSelectBookSuggestion = (s: BookSuggestion): void => {
++        this.bookTitle = s.title;
++        if (s.author) this.authorName = s.author;
++        if (!this.title.trim()) this.title = s.title;
++        this.notifyViewAboutChanges();
++    };
++
++    public onSelectAuthorSuggestion = (s: BookSuggestion): void => {
++        this.authorName = s.author;
++        this.notifyViewAboutChanges();
++    };
++
+     public onSubmit = async (): Promise<void> => {
++        if (!this.genreId) {
++            this.errorMessage = 'Выберите жанр из списка';
++            this.isShowError = true;
++            this.notifyViewAboutChanges();
++            return;
++        }
++
+         this.isLoading = true;
+         this.isShowError = false;
+         this.errorMessage = '';
+--- /dev/null
++++ b/bookswap/src/shared/ui/Autocomplete.tsx
+@@ -0,0 +1,194 @@
++import React, {useEffect, useId, useRef, useState} from 'react';
++import {
++    dropdownHintClass,
++    dropdownInputClass,
++    dropdownListClass,
++    dropdownOptionActiveClass,
++    dropdownOptionClass,
++} from './dropdownStyles.ts';
++
++interface AutocompleteProps<T> {
++    id?: string;
++    name?: string;
++    label: string;
++    placeholder?: string;
++    value: string;
++    /** Пользователь печатает — значение поля свободное */
++    onChange: (value: string) => void;
++    /** Загрузка подсказок; signal отменяет устаревший запрос */
++    fetchSuggestions: (query: string, signal: AbortSignal) => Promise<T[]>;
++    /** Пользователь выбрал подсказку */
++    onSelect: (item: T) => void;
++    getKey: (item: T, index: number) => string;
++    renderItem: (item: T) => React.ReactNode;
++    minChars?: number;
++    debounceMs?: number;
++    disabled?: boolean;
++}
++
++/**
++ * Текстовое поле с подсказками (WAI-ARIA combobox).
++ * Запросы идут с задержкой (debounce), устаревшие отменяются.
++ * Клавиатура: ↑/↓ — выбор, Enter — подставить, Esc — закрыть.
++ */
++function Autocomplete<T>({
++    id,
++    name,
++    label,
++    placeholder,
++    value,
++    onChange,
++    fetchSuggestions,
++    onSelect,
++    getKey,
++    renderItem,
++    minChars = 2,
++    debounceMs = 300,
++    disabled = false,
++}: AutocompleteProps<T>) {
++    const generatedId = useId();
++    const inputId = id ?? generatedId;
++    const listId = `${inputId}-listbox`;
++
++    const [items, setItems] = useState<T[]>([]);
++    const [isOpen, setIsOpen] = useState(false);
++    const [isLoading, setIsLoading] = useState(false);
++    const [error, setError] = useState('');
++    const [activeIndex, setActiveIndex] = useState(-1);
++
++    const timerRef = useRef<number | undefined>(undefined);
++    const abortRef = useRef<AbortController | null>(null);
++
++    const cancelPending = () => {
++        window.clearTimeout(timerRef.current);
++        abortRef.current?.abort();
++        abortRef.current = null;
++    };
++
++    useEffect(() => cancelPending, []);
++
++    const requestSuggestions = (query: string) => {
++        cancelPending();
++        if (query.trim().length < minChars) {
++            setItems([]);
++            setIsOpen(false);
++            setIsLoading(false);
++            return;
++        }
++
++        setIsOpen(true);
++        setIsLoading(true);
++        setError('');
++
++        timerRef.current = window.setTimeout(async () => {
++            const controller = new AbortController();
++            abortRef.current = controller;
++            try {
++                const result = await fetchSuggestions(query, controller.signal);
++                if (controller.signal.aborted) return;
++                setItems(result);
++                setActiveIndex(-1);
++            } catch (e) {
++                if (controller.signal.aborted) return;
++                setItems([]);
++                setError(e instanceof Error ? e.message : 'Не удалось загрузить подсказки');
++            } finally {
++                if (!controller.signal.aborted) setIsLoading(false);
++            }
++        }, debounceMs);
++    };
++
++    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
++        onChange(e.target.value);
++        requestSuggestions(e.target.value);
++    };
++
++    const select = (item: T) => {
++        cancelPending();
++        onSelect(item);
++        setIsOpen(false);
++        setItems([]);
++        setActiveIndex(-1);
++        setIsLoading(false);
++    };
++
++    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
++        if (!isOpen || items.length === 0) {
++            if (e.key === 'Escape') setIsOpen(false);
++            return;
++        }
++        switch (e.key) {
++            case 'ArrowDown':
++                e.preventDefault();
++                setActiveIndex((i) => (i + 1) % items.length);
++                break;
++            case 'ArrowUp':
++                e.preventDefault();
++                setActiveIndex((i) => (i <= 0 ? items.length - 1 : i - 1));
++                break;
++            case 'Enter':
++                if (activeIndex >= 0) {
++                    e.preventDefault(); // не отправлять форму
++                    select(items[activeIndex]);
++                }
++                break;
++            case 'Escape':
++                e.preventDefault();
++                setIsOpen(false);
++                break;
++        }
++    };
++
++    const showList = isOpen && (isLoading || error !== '' || items.length > 0 || value.trim().length >= minChars);
++
++    return (
++        <div className="relative">
++            <label className="visually-hidden" htmlFor={inputId}>{label}</label>
++            <input
++                id={inputId}
++                name={name}
++                type="text"
++                role="combobox"
++                aria-autocomplete="list"
++                aria-expanded={showList}
++                aria-controls={listId}
++                aria-activedescendant={activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
++                autoComplete="off"
++                placeholder={placeholder}
++                disabled={disabled}
++                value={value}
++                onChange={handleChange}
++                onKeyDown={handleKeyDown}
++                onFocus={() => { if (items.length > 0) setIsOpen(true); }}
++                onBlur={() => setIsOpen(false)}
++                className={dropdownInputClass}
++            />
++
++            {showList && (
++                <ul id={listId} role="listbox" className={dropdownListClass}>
++                    {isLoading && <li className={dropdownHintClass}>Ищем…</li>}
++                    {!isLoading && error && <li className={dropdownHintClass}>{error}</li>}
++                    {!isLoading && !error && items.length === 0 && (
++                        <li className={dropdownHintClass}>Ничего не найдено — можно ввести вручную</li>
++                    )}
++                    {!isLoading && items.map((item, index) => (
++                        <li
++                            key={getKey(item, index)}
++                            id={`${listId}-${index}`}
++                            role="option"
++                            aria-selected={index === activeIndex}
++                            className={`${dropdownOptionClass} ${index === activeIndex ? dropdownOptionActiveClass : ''}`}
++                            // mousedown вместо click: срабатывает раньше blur у поля
++                            onMouseDown={(e) => { e.preventDefault(); select(item); }}
++                            onMouseEnter={() => setActiveIndex(index)}
++                        >
++                            {renderItem(item)}
++                        </li>
++                    ))}
++                </ul>
++            )}
++        </div>
++    );
++}
++
++export default Autocomplete;
+--- /dev/null
++++ b/bookswap/src/shared/ui/Combobox.tsx
+@@ -0,0 +1,186 @@
++import React, {useEffect, useId, useMemo, useState} from 'react';
++import {
++    dropdownHintClass,
++    dropdownInputClass,
++    dropdownListClass,
++    dropdownOptionActiveClass,
++    dropdownOptionClass,
++} from './dropdownStyles.ts';
++
++export interface ComboboxOption {
++    id: string;
++    name: string;
++}
++
++interface ComboboxProps {
++    id?: string;
++    label: string;
++    placeholder?: string;
++    options: ComboboxOption[];
++    selectedId: string;
++    onSelect: (id: string) => void;
++    isLoading?: boolean;
++    error?: string;
++    onRetry?: () => void;
++    disabled?: boolean;
++}
++
++/**
++ * Выпадающий список с поиском: можно выбрать только значение из списка.
++ * Ввод фильтрует варианты; если ничего не выбрано — при потере фокуса
++ * поле возвращается к выбранному значению.
++ */
++const Combobox: React.FC<ComboboxProps> = ({
++    id,
++    label,
++    placeholder,
++    options,
++    selectedId,
++    onSelect,
++    isLoading = false,
++    error = '',
++    onRetry,
++    disabled = false,
++}) => {
++    const generatedId = useId();
++    const inputId = id ?? generatedId;
++    const listId = `${inputId}-listbox`;
++
++    const selectedName = options.find((o) => o.id === selectedId)?.name ?? '';
++
++    const [text, setText] = useState(selectedName);
++    const [isOpen, setIsOpen] = useState(false);
++    const [isFiltering, setIsFiltering] = useState(false);
++    const [activeIndex, setActiveIndex] = useState(-1);
++
++    // Синхронизация, если выбранное значение поменялось снаружи (или загрузились варианты)
++    useEffect(() => {
++        setText(selectedName);
++    }, [selectedName]);
++
++    const visibleOptions = useMemo(() => {
++        const query = text.trim().toLowerCase();
++        if (!isFiltering || !query) return options;
++        return options.filter((o) => o.name.toLowerCase().includes(query));
++    }, [options, text, isFiltering]);
++
++    const open = () => {
++        if (disabled) return;
++        setIsOpen(true);
++        setActiveIndex(Math.max(0, visibleOptions.findIndex((o) => o.id === selectedId)));
++    };
++
++    const close = () => {
++        setIsOpen(false);
++        setIsFiltering(false);
++        setText(selectedName);
++        setActiveIndex(-1);
++    };
++
++    const select = (option: ComboboxOption) => {
++        onSelect(option.id);
++        setText(option.name);
++        setIsOpen(false);
++        setIsFiltering(false);
++        setActiveIndex(-1);
++    };
++
++    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
++        setText(e.target.value);
++        setIsFiltering(true);
++        setIsOpen(true);
++        setActiveIndex(0);
++    };
++
++    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
++        switch (e.key) {
++            case 'ArrowDown':
++                e.preventDefault();
++                if (!isOpen) { open(); return; }
++                if (visibleOptions.length) setActiveIndex((i) => (i + 1) % visibleOptions.length);
++                break;
++            case 'ArrowUp':
++                e.preventDefault();
++                if (!isOpen) { open(); return; }
++                if (visibleOptions.length) setActiveIndex((i) => (i <= 0 ? visibleOptions.length - 1 : i - 1));
++                break;
++            case 'Enter':
++                if (isOpen) {
++                    e.preventDefault(); // не отправлять форму
++                    const option = visibleOptions[activeIndex];
++                    if (option) select(option);
++                }
++                break;
++            case 'Escape':
++                if (isOpen) {
++                    e.preventDefault();
++                    close();
++                }
++                break;
++        }
++    };
++
++    return (
++        <div className="relative">
++            <label className="visually-hidden" htmlFor={inputId}>{label}</label>
++            <input
++                id={inputId}
++                type="text"
++                role="combobox"
++                aria-autocomplete="list"
++                aria-expanded={isOpen}
++                aria-controls={listId}
++                aria-activedescendant={isOpen && activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
++                autoComplete="off"
++                placeholder={isLoading ? 'Загрузка жанров…' : placeholder}
++                disabled={disabled || isLoading}
++                value={text}
++                onChange={handleChange}
++                onKeyDown={handleKeyDown}
++                onFocus={open}
++                onClick={open}
++                onBlur={close}
++                className={`${dropdownInputClass} pr-12`}
++            />
++            <span aria-hidden="true" className="pointer-events-none absolute right-20 top-1/2 -translate-y-1/2">
++                ▾
++            </span>
++
++            {isOpen && (
++                <ul id={listId} role="listbox" className={dropdownListClass}>
++                    {visibleOptions.length === 0 && (
++                        <li className={dropdownHintClass}>
++                            {options.length === 0 ? 'Список жанров пуст' : 'Такого жанра нет'}
++                        </li>
++                    )}
++                    {visibleOptions.map((option, index) => (
++                        <li
++                            key={option.id}
++                            id={`${listId}-${index}`}
++                            role="option"
++                            aria-selected={option.id === selectedId}
++                            className={`${dropdownOptionClass} ${index === activeIndex ? dropdownOptionActiveClass : ''} ${option.id === selectedId ? 'font-bold' : ''}`}
++                            onMouseDown={(e) => { e.preventDefault(); select(option); }}
++                            onMouseEnter={() => setActiveIndex(index)}
++                        >
++                            {option.name}
++                        </li>
++                    ))}
++                </ul>
++            )}
++
++            {error && (
++                <div role="alert" className="mt-2 text-accent">
++                    {error}{' '}
++                    {onRetry && (
++                        <button type="button" className="text-blue underline" onClick={onRetry}>
++                            Повторить
++                        </button>
++                    )}
++                </div>
++            )}
++        </div>
++    );
++};
++
++export default Combobox;
+--- /dev/null
++++ b/bookswap/src/shared/ui/dropdownStyles.ts
+@@ -0,0 +1,8 @@
++/** Общие классы для выпадающих списков (Autocomplete, Combobox) */
++export const dropdownInputClass =
++    'w-full bg-gray rounded-12 py-22 px-20 text-16 placeholder:text-16';
++export const dropdownListClass =
++    'absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-auto rounded-12 bg-white shadow-lg border border-gray py-1';
++export const dropdownOptionClass = 'px-20 py-2 cursor-pointer select-none';
++export const dropdownOptionActiveClass = 'bg-gray';
++export const dropdownHintClass = 'px-20 py-2 text-black/50';

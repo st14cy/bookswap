@@ -4,11 +4,30 @@ import type BaseView from '../BaseView';
 import Typography from '../../../shared/ui/Typography';
 import Input from '../../../shared/ui/Input';
 import Button from '../../../shared/ui/Button';
+import Autocomplete from '../../../shared/ui/Autocomplete';
+import Combobox from '../../../shared/ui/Combobox';
+import RadioGroup, { type RadioOption } from '../../../shared/ui/RadioGroup';
+import type { BookSuggestion } from '../../../domain/entity/book/BookSuggestion';
 
 interface Props {
     viewModel: PostFormViewModelImpl;
     onSuccess?: () => void;
 }
+
+const CONDITION_OPTIONS: RadioOption<boolean>[] = [
+    { value: true, label: 'Новое' },
+    { value: false, label: 'Б/у' },
+];
+
+const TERM_OPTIONS: RadioOption<boolean>[] = [
+    { value: true, label: 'Отдать навсегда' },
+    { value: false, label: 'Дать почитать' },
+];
+
+const DELIVERY_OPTIONS: RadioOption<boolean>[] = [
+    { value: true, label: 'Постамат' },
+    { value: false, label: 'Лично при встрече' },
+];
 
 const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
     const [, forceUpdate] = useReducer((n: number) => n + 1, 0);
@@ -22,6 +41,10 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
         viewModel.attachView(baseView);
         return () => viewModel.detachView();
     }, [baseView, viewModel]);
+
+    useEffect(() => {
+        void viewModel.loadGenres();
+    }, [viewModel]);
 
     useEffect(() => {
         if (viewModel.isSuccess) onSuccess?.();
@@ -49,116 +72,87 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
 
             {/* Название книги */}
             <div className="flex flex-col gap-14">
-                <Typography variant="label" weight="bold">Название книги</Typography>
-                <Input
-                    style="base"
-                    name="bookTitle"
+                <Typography variant="label" weight="bold" htmlFor="bookTitle">Название книги</Typography>
+                <Autocomplete<BookSuggestion>
                     id="bookTitle"
-                    type="text"
+                    name="bookTitle"
+                    label="Название книги"
+                    placeholder="Начните вводить название"
                     value={viewModel.bookTitle}
-                    onChange={(e) => viewModel.onChangeBookTitle(e.target.value)}
+                    onChange={viewModel.onChangeBookTitle}
+                    fetchSuggestions={viewModel.suggestBookTitles}
+                    onSelect={viewModel.onSelectBookSuggestion}
+                    getKey={(b, i) => `${b.title}|${b.author}|${i}`}
+                    renderItem={renderBookSuggestion}
                 />
             </div>
 
             {/* Состояние */}
             <div className="flex flex-col gap-14">
                 <Typography variant="h3" weight="bold">Состояние</Typography>
-                <div className="flex gap-8">
-                    <Button
-                        variant="accent"
-                        type="button"
-                        onClick={() => viewModel.onChangeIsNew(true)}
-                    >
-                        Новое
-                    </Button>
-                    <Button
-                        variant="accent"
-                        type="button"
-                        onClick={() => viewModel.onChangeIsNew(false)}
-                    >
-                        Бу
-                    </Button>
-                </div>
+                <RadioGroup
+                    name="isNew"
+                    label="Состояние"
+                    options={CONDITION_OPTIONS}
+                    value={viewModel.isNew}
+                    onChange={viewModel.onChangeIsNew}
+                />
             </div>
 
             {/* Автор */}
             <div className="flex flex-col gap-14">
-                <Typography variant="label" weight="bold">Автор</Typography>
-                <Input
-                    style="base"
-                    name="authorName"
+                <Typography variant="label" weight="bold" htmlFor="authorName">Автор</Typography>
+                <Autocomplete<BookSuggestion>
                     id="authorName"
-                    type="text"
+                    name="authorName"
+                    label="Автор"
+                    placeholder="Начните вводить имя автора"
                     value={viewModel.authorName}
-                    onChange={(e) => viewModel.onChangeAuthorName(e.target.value)}
-                />
-            </div>
-
-            {/* Condition */}
-            <div className="flex flex-col gap-14">
-                <Typography variant="label" weight="bold">Состояние (текст)</Typography>
-                <Input
-                    style="base"
-                    name="condition"
-                    id="condition"
-                    type="text"
-                    value={viewModel.condition}
-                    onChange={(e) => viewModel.onChangeCondition(e.target.value)}
+                    onChange={viewModel.onChangeAuthorName}
+                    fetchSuggestions={viewModel.suggestAuthors}
+                    onSelect={viewModel.onSelectAuthorSuggestion}
+                    getKey={(a, i) => `${a.author}|${i}`}
+                    renderItem={renderAuthorSuggestion}
                 />
             </div>
 
             {/* Срок передачи */}
             <div className="flex flex-col gap-14">
                 <Typography variant="h3" weight="bold">Срок передачи</Typography>
-                <div className="flex gap-8">
-                    <Button
-                        variant="accent"
-                        type="button"
-                        onClick={() => viewModel.onChangeIsForever(true)}
-                    >
-                        Отдать навсегда
-                    </Button>
-                    <Button
-                        variant="accent"
-                        type="button"
-                        onClick={() => viewModel.onChangeIsForever(false)}
-                    >
-                        Дать почитать
-                    </Button>
-                </div>
+                <RadioGroup
+                    name="isForever"
+                    label="Срок передачи"
+                    options={TERM_OPTIONS}
+                    value={viewModel.isForever}
+                    onChange={viewModel.onChangeIsForever}
+                />
             </div>
 
             {/* Способ получения */}
             <div className="flex flex-col gap-14">
                 <Typography variant="h3" weight="bold">Способ получения</Typography>
-                <div className="flex gap-8">
-                    <Button
-                        variant="accent"
-                        type="button"
-                        onClick={() => viewModel.onChangeIsPostamat(true)}
-                    >
-                        Постамат
-                    </Button>
-                    <Button
-                        variant="accent"
-                        type="button"
-                        onClick={() => viewModel.onChangeIsPostamat(false)}
-                    >
-                        Лично при встрече
-                    </Button>
-                </div>
+                <RadioGroup
+                    name="isPostamat"
+                    label="Способ получения"
+                    options={DELIVERY_OPTIONS}
+                    value={viewModel.isPostamat}
+                    onChange={viewModel.onChangeIsPostamat}
+                />
             </div>
 
             {/* Жанр */}
             <div className="flex flex-col gap-14">
-                <Typography variant="label" weight="bold">ID жанра (GUID)</Typography>
-                <Input
-                    style="base"
-                    name="genreId"
+                <Typography variant="label" weight="bold" htmlFor="genreId">Жанр</Typography>
+                <Combobox
                     id="genreId"
-                    type="text"
-                    value={viewModel.genreId}
-                    onChange={(e) => viewModel.onChangeGenreId(e.target.value)}
+                    label="Жанр"
+                    placeholder="Выберите жанр"
+                    options={viewModel.genres}
+                    selectedId={viewModel.genreId}
+                    onSelect={viewModel.onChangeGenreId}
+                    isLoading={viewModel.isGenresLoading}
+                    error={viewModel.genresError}
+                    onRetry={() => void viewModel.loadGenres()}
                 />
             </div>
 
@@ -214,19 +208,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* OwnerId */}
-            <div className="flex flex-col gap-14">
-                <Typography variant="label" weight="bold">ID владельца (GUID)</Typography>
-                <Input
-                    style="base"
-                    name="ownerId"
-                    id="ownerId"
-                    type="text"
-                    value={viewModel.ownerId}
-                    onChange={(e) => viewModel.onChangeOwnerId(e.target.value)}
-                />
-            </div>
-
             {/* Ошибка */}
             {viewModel.isShowError && (
                 <div style={{ color: 'red' }}>{viewModel.errorMessage}</div>
@@ -244,5 +225,26 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
         </form>
     );
 };
+
+const renderBookSuggestion = (b: BookSuggestion) => (
+    <div className="flex items-center gap-10">
+        {b.coverUrl
+            ? <img src={b.coverUrl} alt="" className="w-8 h-12 object-cover rounded shrink-0" loading="lazy" />
+            : <div className="w-8 h-12 rounded bg-gray shrink-0" />}
+        <div className="min-w-0">
+            <div className="font-bold truncate">{b.title}</div>
+            <div className="text-black/60 truncate">
+                {[b.author, b.year].filter(Boolean).join(' · ')}
+            </div>
+        </div>
+    </div>
+);
+
+const renderAuthorSuggestion = (a: BookSuggestion) => (
+    <div className="min-w-0">
+        <div className="font-bold truncate">{a.author}</div>
+        {a.title && <div className="text-black/60 truncate">Известная книга: {a.title}</div>}
+    </div>
+);
 
 export default PostFormComponent;

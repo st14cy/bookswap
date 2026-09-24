@@ -15,6 +15,12 @@ import GetAllByUserIdUseCase from "./domain/interactors/post/GetAllByUserIdUseCa
 import UpdatePostUseCase from "./domain/interactors/post/UpdatePostUseCase.tsx";
 import CreatePostUseCase from "./domain/interactors/post/CreateNewPostUseCase";
 
+// --- Book / Genre ---
+import BookApiRepository from './data/book/BookApiRepository';
+import GenreApiRepository from './data/genre/GenreApiRepository';
+import SuggestBooksUseCase from './domain/interactors/book/SuggestBooksUseCase';
+import GetGenresUseCase from './domain/interactors/genre/GetGenresUseCase';
+
 // --- Domain state ---
 export const authHolder = new AuthHolder();          // синглтон — общий state, восстанавливается из localStorage
 
@@ -22,6 +28,8 @@ export const authHolder = new AuthHolder();          // синглтон — о�
 const authRepository = new AuthApi();                // для работы без бэкенда: new AuthFakeApi()
 export const httpClient = new AuthorizedHttpClient(authHolder, authRepository);
 const postRepository = new PostApiRepository(httpClient);
+const bookRepository = new BookApiRepository();
+const genreRepository = new GenreApiRepository();
 
 // --- Use cases ---
 export const loginUseCase = new LoginUseCase(authRepository, authHolder);
@@ -33,6 +41,9 @@ export const getPostByIdUseCase = new GetPostByIdUseCase(postRepository);
 export const getPostsByUserUseCase = new GetAllByUserIdUseCase(postRepository);
 export const createPostUsecase = new CreatePostUseCase(postRepository);
 export const updatePostUsecase = new UpdatePostUseCase(postRepository);
+
+export const suggestBooksUseCase = new SuggestBooksUseCase(bookRepository);
+export const getGenresUseCase = new GetGenresUseCase(genreRepository);
 
 // --- View models ---
 export const authViewModel = new AuthViewModelImpl(loginUseCase, registerUseCase, logoutUseCase, authHolder);
