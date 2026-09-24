@@ -1,15 +1,15 @@
 import type {PostRepository} from "../../repository/post/PostRepository.tsx";
-import type {UpdatePost} from "../../entity/post/models/UpdatePost.ts";
 import type {Post} from "../../entity/post/models/Post.ts";
 
-export default class  UpdatePostUseCase {
+/** Объявления текущего авторизованного пользователя («Мои объявления») */
+export default class GetMyPostsUseCase {
     private readonly postRepository: PostRepository;
 
     constructor(postRepository: PostRepository) {
         this.postRepository = postRepository;
     }
 
-    public async execute(post:UpdatePost): Promise<Post> {
-        return this.postRepository.update(post);
+    execute(): Promise<Post[]> {
+        return this.postRepository.getMy();
     }
 }

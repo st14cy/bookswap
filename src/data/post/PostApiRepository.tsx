@@ -29,11 +29,56 @@ export default class PostApiRepository{
     }
 
     async  getListByUserId(id: string):Promise<Post[]>{
-        const  response = await fetch(`${this.baseUrl}/api/Advertisement/getByUser/446b6c74-9d7d-4500-86b6-92b02867b27c`)
-        if(!response.ok) throw new Error(`Failed to fetch one post:${response.status}`);
+        const  response = await fetch(`${this.baseUrl}/api/Advertisement/getByUser/${id}`)
+        if(!response.ok) throw new Error(`Failed to fetch user posts:${response.status}`);
         const data = await  response.json();
-        return  this.mapToEntity(data);
+        return data.map(this.mapToEntity);
     }
+
+    /** Объявления текущего пользователя: запрос с токеном, пользователь определяется на сервере */
+    async getMy(): Promise<Post[]> {
+        const response = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/my`);
+        if (response.status === 401) throw new Error('Войдите в аккаунт, чтобы увидеть свои объявления');
+        if (!response.ok) throw new Error(`Не удалось загрузить объявления (${response.status})`);
+        const data = await response.json();
+        return data.map(this.mapToEntity);
+    }
+    /** Снять с публикации / опубликовать снова (только владелец, запрос с токеном) */
+    async setActive(id: string, isActive: boolean): Promise<Post> {
+        const action = isActive ? 'publish' : 'unpublish';
+        const response = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/${id}/${action}`, {
+            method: 'PATCH',
+        });
+        if (!response.ok) {
+            let message = isActive ? 'Не удалось опубликовать объявление' : 'Не удалось снять объявление с публикации';
+            try {
+                const data = await response.json();
+                if (data && typeof data.message === 'string') message = data.message;
+            } catch {
+                // тело ответа не JSON — оставляем общее сообщение
+            }
+            throw new Error(message);
+        }
+        return this.mapToEntity(await response.json());
+    }
+
+    /** Удаление (только владелец, запрос с токеном). Сервер отвечает 204 без тела */
+    async delete(id: string): Promise<void> {
+        const response = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            let message = 'Не удалось удалить объявление';
+            try {
+                const data = await response.json();
+                if (data && typeof data.message === 'string') message = data.message;
+            } catch {
+                // тело ответа не JSON — оставляем общее сообщение
+            }
+            throw new Error(message);
+        }
+    }
+
     async create(post:CreatePost): Promise<Post>{
         const res = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/createAdvertisement`, {
             method: 'POST',
@@ -43,14 +88,41 @@ export default class PostApiRepository{
         if (!res.ok) throw new Error('Не удалось создать объявление');
         return this.mapToEntity(await res.json());
     }
+    /** Редактирование (только владелец, запрос с токеном) */
     public async update(dto: UpdatePost): Promise<Post> {
         const res = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/posts/${dto.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(this.mapDtoToRequest(dto)),
+            body: JSON.stringify(this.mapUpdateToRequest(dto)),
         });
-        if (!res.ok) throw new Error('Не удалось обновить объявление');
+        if (!res.ok) {
+            let message = 'Не удалось обновить объявление';
+            try {
+                const data = await res.json();
+                if (data && typeof data.message === 'string') message = data.message;
+            } catch {
+                // тело ответа не JSON — оставляем общее сообщение
+            }
+            throw new Error(message);
+        }
         return this.mapToEntity(await res.json());
+    }
+
+    /** Поля UpdateAdvertisementRequestDto на бэкенде (автор там называется author) */
+    private mapUpdateToRequest(dto: UpdatePost) {
+        return {
+            title: dto.title,
+            bookTitle: dto.bookTitle,
+            description: dto.description,
+            author: dto.authorName,
+            genreId: dto.genreId || null,
+            isNew: dto.isNew,
+            isForever: dto.isForever,
+            isPostamat: dto.isPostamat,
+            city: dto.city,
+            street: dto.street,
+            houseNumber: dto.houseNumber,
+        };
     }
 
 
@@ -93,13 +165,15 @@ export default class PostApiRepository{
             genreId: item.genreId,
             genreName: item.genreName,
             isNew: item.isNew,
+            condition: item.condition ?? (item.isNew ? 'Новое' : 'Б/у'),
             isForever: item.isForever,
             isPostamat: item.isPostamat,
             city: item.city,
             street: item.street,
             houseNumber: item.houseNumber,
             ownerId: item.ownerId,
-            ownerName: item.ownerName
+            ownerName: item.ownerName,
+            isActive: item.isActive ?? true,
         };
     }
 }

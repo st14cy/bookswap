@@ -44,6 +44,7 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
 
     useEffect(() => {
         void viewModel.loadGenres();
+        if (viewModel.isEditMode) void viewModel.loadPost();
     }, [viewModel]);
 
     useEffect(() => {
@@ -54,6 +55,19 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
         e.preventDefault();
         viewModel.onSubmit();
     };
+
+    if (viewModel.isPostLoading) {
+        return <Typography>Загрузка объявления...</Typography>;
+    }
+
+    if (viewModel.postLoadError) {
+        return (
+            <div role="alert" className="flex flex-col items-start gap-8 text-accent">
+                {viewModel.postLoadError}
+                <Button onClick={() => void viewModel.loadPost()}>Повторить</Button>
+            </div>
+        );
+    }
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-24 max-w-7xl mx-auto">
@@ -216,7 +230,9 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
             {/* Кнопки */}
             <div className="flex flex-row gap-8">
                 <Button type="submit" variant="accent" disabled={viewModel.isLoading}>
-                    {viewModel.isLoading ? 'Сохранение...' : 'Сохранить изменения'}
+                    {viewModel.isLoading
+                        ? 'Сохранение...'
+                        : viewModel.isEditMode ? 'Сохранить изменения' : 'Разместить объявление'}
                 </Button>
                 <Button type="button" onClick={() => window.history.back()}>
                     Отмена

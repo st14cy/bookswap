@@ -3,6 +3,7 @@ import PostsPage from "../../pages/PostListPage/PostListPage.tsx";
 import PostDetailsPage from "../../pages/PostDetailsPage/PostDetailsPage.tsx";
 import AddPostPage from "../../pages/AddPostPage/AddPostPage.tsx";
 import UsersPostPage from "../../pages/UsersPostPage/UsersPostPage.tsx";
+import EditPostPage from "../../pages/EditPostPage/EditPostPage.tsx";
 
 export const ROUTES = {
     mainCatalog: {
@@ -19,6 +20,11 @@ export const ROUTES = {
         path: '/posts/new',
         component: AddPostPage,
         title: 'Новое объявление',
+        requiresAuth: true },
+    editPost: {
+        path: '/posts/:postId/edit',
+        component: EditPostPage,
+        title: 'Редактирование объявления',
         requiresAuth: true },
     usersPosts: {
         path: 'profile',

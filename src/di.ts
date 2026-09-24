@@ -14,6 +14,9 @@ import GetPostByIdUseCase from './domain/interactors/post/GetPostByIdUseCase';
 import GetAllByUserIdUseCase from "./domain/interactors/post/GetAllByUserIdUseCase.tsx";
 import UpdatePostUseCase from "./domain/interactors/post/UpdatePostUseCase.tsx";
 import CreatePostUseCase from "./domain/interactors/post/CreateNewPostUseCase";
+import GetMyPostsUseCase from "./domain/interactors/post/GetMyPostsUseCase";
+import ChangePostPublicationUseCase from "./domain/interactors/post/ChangePostPublicationUseCase";
+import DeletePostUseCase from "./domain/interactors/post/DeletePostUseCase";
 
 // --- Book / Genre ---
 import BookApiRepository from './data/book/BookApiRepository';
@@ -39,6 +42,9 @@ export const logoutUseCase = new LogoutUseCase(authRepository, authHolder);
 export const getAllPostsUseCase = new GetAllPostUseCase(postRepository);
 export const getPostByIdUseCase = new GetPostByIdUseCase(postRepository);
 export const getPostsByUserUseCase = new GetAllByUserIdUseCase(postRepository);
+export const getMyPostsUseCase = new GetMyPostsUseCase(postRepository);
+export const changePostPublicationUseCase = new ChangePostPublicationUseCase(postRepository);
+export const deletePostUseCase = new DeletePostUseCase(postRepository);
 export const createPostUsecase = new CreatePostUseCase(postRepository);
 export const updatePostUsecase = new UpdatePostUseCase(postRepository);
 

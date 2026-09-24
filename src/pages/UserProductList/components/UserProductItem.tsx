@@ -19,7 +19,16 @@ interface IUserProduct {
     location?:string;
     likeCount?:number;
     viewCount?:number;
-
+    /** false — объявление в архиве */
+    isActive?: boolean;
+    /** Снять с публикации / опубликовать снова */
+    onTogglePublication?: () => void;
+    /** Идёт запрос — кнопка заблокирована */
+    isProcessing?: boolean;
+    /** Переход к редактированию */
+    onEdit?: () => void;
+    /** Удаление (с подтверждением) */
+    onDelete?: () => void;
 }
 const UserProductItem:React.FC<IUserProduct> = ({
                                                     name,
@@ -27,7 +36,12 @@ const UserProductItem:React.FC<IUserProduct> = ({
                                                     author,
                                                     location='Неизвестно',
                                                     likeCount=0,
-                                                    viewCount=0}) => {
+                                                    viewCount=0,
+                                                    isActive=true,
+                                                    onTogglePublication,
+                                                    isProcessing=false,
+                                                    onEdit,
+                                                    onDelete}) => {
     return (
     <li>
         <img src={imageSrc}
@@ -54,9 +68,17 @@ const UserProductItem:React.FC<IUserProduct> = ({
                 </div>
             </dl>
             <div >
-                <Button>Снять с публикации</Button>
-                <Button>Редактировать</Button>
-                <Button>Удалить</Button>
+                <Button
+                    variant={isActive ? 'primary' : 'accent'}
+                    onClick={onTogglePublication}
+                    disabled={isProcessing || !onTogglePublication}
+                >
+                    {isProcessing
+                        ? 'Подождите…'
+                        : isActive ? 'Снять с публикации' : 'Опубликовать снова'}
+                </Button>
+                <Button onClick={onEdit} disabled={!onEdit}>Редактировать</Button>
+                <Button onClick={onDelete} disabled={isProcessing || !onDelete}>Удалить</Button>
             </div>
         </div>
     </li>

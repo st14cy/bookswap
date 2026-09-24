@@ -2,6 +2,7 @@ import type PostFormViewModel from './PostFormViewModel';
 import type BaseView from '../../../view/BaseView';
 import type CreatePostUseCase from '../../../../domain/interactors/post/CreateNewPostUseCase';
 import type UpdatePostUseCase from '../../../../domain/interactors/post/UpdatePostUseCase';
+import type GetPostByIdUseCase from '../../../../domain/interactors/post/GetPostByIdUseCase';
 import type { Post } from '../../../../domain/entity/post/models/Post';
 import type SuggestBooksUseCase from '../../../../domain/interactors/book/SuggestBooksUseCase';
 import type GetGenresUseCase from '../../../../domain/interactors/genre/GetGenresUseCase';
@@ -29,6 +30,9 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
     public isSuccess = false;
     public isEditMode: boolean;
 
+    public isPostLoading = false;
+    public postLoadError = '';
+
     public genres: Genre[] = [];
     public isGenresLoading = false;
     public genresError = '';
@@ -39,6 +43,7 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
     private readonly suggestBooksUseCase: SuggestBooksUseCase;
     private readonly getGenresUseCase: GetGenresUseCase;
     private readonly authHolder: AuthHolder;
+    private readonly getPostByIdUseCase: GetPostByIdUseCase;
     private readonly postId?: string;
 
     public constructor(
@@ -47,6 +52,7 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
         suggestBooksUseCase: SuggestBooksUseCase,
         getGenresUseCase: GetGenresUseCase,
         authHolder: AuthHolder,
+        getPostByIdUseCase: GetPostByIdUseCase,
         postId?: string,
     ) {
         this.createPostUseCase = createPostUseCase;
@@ -54,12 +60,31 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
         this.suggestBooksUseCase = suggestBooksUseCase;
         this.getGenresUseCase = getGenresUseCase;
         this.authHolder = authHolder;
+        this.getPostByIdUseCase = getPostByIdUseCase;
         this.postId = postId;
         this.isEditMode = Boolean(postId);
     }
 
     public attachView = (baseView: BaseView): void => { this.baseView = baseView; };
     public detachView = (): void => { this.baseView = undefined; };
+
+    /** Режим редактирования: загрузить объявление и заполнить форму */
+    public loadPost = async (): Promise<void> => {
+        if (!this.postId || this.isPostLoading) return;
+        this.isPostLoading = true;
+        this.postLoadError = '';
+        this.notifyViewAboutChanges();
+
+        try {
+            const post = await this.getPostByIdUseCase.execute(this.postId);
+            this.initFromPost(post);
+        } catch (e) {
+            this.postLoadError = e instanceof Error ? e.message : 'Не удалось загрузить объявление';
+        } finally {
+            this.isPostLoading = false;
+        }
+        this.notifyViewAboutChanges();
+    };
 
     public initFromPost = (post: Post): void => {
         this.title = post.title;

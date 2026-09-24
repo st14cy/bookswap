@@ -13,4 +13,8 @@ export interface Post {
     street: string;
     houseNumber: string;
     ownerId: string;
+    ownerName?: string;
+    genreName?: string;
+    /** false — снято с публикации (в архиве) */
+    isActive: boolean;
 }

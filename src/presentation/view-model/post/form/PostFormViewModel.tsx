@@ -24,6 +24,11 @@ export default interface PostFormViewModel extends BaseViewModel {
     isEditMode: boolean;
     isSuccess: boolean;
 
+    // --- редактирование: загрузка объявления ---
+    isPostLoading: boolean;
+    postLoadError: string;
+    loadPost: () => Promise<void>;
+
     // --- жанры (из БД) ---
     genres: Genre[];
     isGenresLoading: boolean;
