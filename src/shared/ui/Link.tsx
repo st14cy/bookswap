@@ -5,14 +5,21 @@ interface LinkProps {
     disabled?: boolean,
     children?:  React.ReactNode,
     href?: string,
+    className?: string
 }
 
 const Link:React.FC<LinkProps> = ({
     onClick,
     children='Ссылка',
-    href='#'}) => {
+    href='#',
+                                      className=''}) => {
+
     return (
-        <a href={href} onClick={onClick} className="cursor-pointer uppercase">
+        <a
+            href={href}
+            onClick={onClick}
+            className={`${className}`}
+        >
             {children}
         </a>
     );

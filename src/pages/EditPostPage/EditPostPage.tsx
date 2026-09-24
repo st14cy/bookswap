@@ -24,10 +24,13 @@ const EditPostPage: React.FC = () => {
     if (!postId) return <div>Объявление не найдено</div>;
 
     return (
-        <PostFormComponent
-            viewModel={viewModel}
-            onSuccess={() => navigate('/profile')}
-        />
+        <div className="w-full max-w-7xl mx-auto pt-[60px]">
+                <PostFormComponent
+                    viewModel={viewModel}
+                    onSuccess={() => navigate('/profile')}
+                />
+        </div>
+
     );
 };
 

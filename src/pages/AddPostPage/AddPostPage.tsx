@@ -14,10 +14,12 @@ const AddPostPage: React.FC = () => {
         [],
     );
     return (
-        <PostFormComponent
-            viewModel={viewModel}
-            onSuccess={() => navigate('/')}
-        />
+        <div className="w-full max-w-7xl mx-auto pt-[60px]">
+            <PostFormComponent
+                viewModel={viewModel}
+                onSuccess={() => navigate('/')}
+            />
+        </div>
     );
 };
 

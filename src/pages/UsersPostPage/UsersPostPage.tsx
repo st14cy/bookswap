@@ -9,8 +9,13 @@ const UserPosts: React.FC<{ userName: string }> = ({ userName }) => {
         () => new PostUserListViewModelImpl(getMyPostsUseCase, changePostPublicationUseCase, deletePostUseCase),
         [],
     );
+    return(
+        <div className="w-full max-w-7xl mx-auto">
+            <div className="flex flex-col items-start w-full max-w-[776px]">
+                <PostUserListComponents viewModel={viewModel} userName={userName} />
+            </div>
+        </div>)
 
-    return <PostUserListComponents viewModel={viewModel} userName={userName} />;
 };
 
 const UsersPostPage: React.FC = () => {
@@ -21,6 +26,7 @@ const UsersPostPage: React.FC = () => {
             key={user?.id ?? ''}
             userName={user ? (user.firstName || user.login) : ''}
         />
+
     );
 };
 

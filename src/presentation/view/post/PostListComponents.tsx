@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useReducer } from 'react';
-import Typography from '../../../shared/ui/Typography';
+
 import type PostListViewModelImpl from '../../view-model/post/get-list/PostListViewModelImpl';
 import type BaseView from '../BaseView';
 import PostItem from '../../../pages/PostListPage/components/PostItem.tsx';
 import AuthorNameFormatter from '../../util/AuthorNameFormatter.ts';
+import SearchBar from "../../../pages/PostListPage/components/SearchBar.tsx";
+import categoryImage from "../../../assets/image/Category.png";
+import Typography from "../../../shared/ui/Typography.tsx";
 
 interface Props {
     viewModel: PostListViewModelImpl;
@@ -29,22 +32,27 @@ const PostListComponents: React.FC<Props> = ({ viewModel }) => {
     if (viewModel.posts.length === 0) return <div>Постов нет</div>;
 
     return (
-        <div>
-            <Typography variant="h2" weight="bold">Рядом с вами</Typography>
-            <div className="max-w-7xl overflow-x-auto scroll-smooth">
-                <ul className="flex flex-row gap-60 pb-4">
-                    {viewModel.posts.map((post) => (
-                        <PostItem
-                            key={post.id}
-                            id={post.id}
-                            name={post.bookTitle}
-                            author={AuthorNameFormatter.short(post.authorName)}
-                            coverUrl={post.coverUrl}
-                            location="—"
-                        />
-                    ))}
-                </ul>
+        <div >
+            <div className="flex flex-col items-center bg-background-dark w-full  pt-[40px] mb-[60px]">
+                <div className="flex flex-col items-center justify-center max-w-7xl">
+                    <SearchBar></SearchBar>
+                    <img src={categoryImage} alt="books"/>
+                </div>
+
             </div>
+            <ul className="grid grid-cols-4 gap-60 w-full max-w-7xl mx-auto pb-4">
+                {viewModel.posts.map((post) => (
+                    <PostItem
+                        key={post.id}
+                        id={post.id}
+                        name={post.bookTitle}
+                        author={AuthorNameFormatter.short(post.authorName)}
+                        coverUrl={post.coverUrl}
+                        location="—"
+                    />
+                ))}
+            </ul>
+
         </div>
     );
 };

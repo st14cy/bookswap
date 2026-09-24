@@ -70,7 +70,7 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-24 max-w-7xl mx-auto">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-24 max-w-[776px] ">
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold">Название объявления</Typography>
                 <Input

@@ -5,7 +5,7 @@ import Input from "../../../shared/ui/Input.tsx";
 
 const SearchBar: React.FC = () => {
     return (
-        <form className='bg-gray rounded-12 mt-4 py-12'>
+        <form className='flex m-auto max-w-7xl bg-gray rounded-12 mt-4 py-12   '>
             <label htmlFor='search' className='visually-hidden'></label>
             <Input style='search' name='search' id='search' type='text' placeholder='Поиск'/>
             <Button variant='searchAccent'>

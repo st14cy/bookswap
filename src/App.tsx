@@ -11,7 +11,7 @@ function App() {
   return (
       <BrowserRouter>
           <div className="px-4 sm:px-6 lg:px-8">
-              <Header />
+              <Header/>
               <main>
                   <Routes>
                       {Object.entries(ROUTES).map(([key, route]) => {
