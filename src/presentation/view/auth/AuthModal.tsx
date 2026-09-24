@@ -8,7 +8,6 @@ interface Props {
     authViewModel: AuthViewModel;
 }
 
-/** Модалка входа/регистрации. Открывается через authViewModel.openAuthModal() */
 const AuthModal: React.FC<Props> = ({authViewModel}) => {
     const vm = useAuthViewModel(authViewModel);
 

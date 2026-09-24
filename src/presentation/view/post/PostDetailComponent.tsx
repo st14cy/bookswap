@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import LikeControl from "../../../shared/ui/LikeControl.tsx";
+import FavoriteButton from "../favorite/FavoriteButton.tsx";
 import type PostDetailViewModelImpl from "../../view-model/post/get-by-id/PostDetailViewModelImpl.tsx";
 import type BaseView from "../BaseView.tsx";
 import Typography from "../../../shared/ui/Typography.tsx";
@@ -39,7 +39,7 @@ const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
                                width="550" height="480"
                                className="w-[550px] h-[480px] object-contain bg-gray rounded-20"/>
                         : <div className="w-[550px] h-[480px] bg-gray rounded-20" role="img" aria-label="Обложки нет"/>}
-                    <LikeControl/>
+                    <FavoriteButton postId={viewModel.post.id}/>
                 </section>
                 <div className="flex flex-col gap-14">
                     <Typography variant='h3'

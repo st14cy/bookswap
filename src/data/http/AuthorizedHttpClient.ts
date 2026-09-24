@@ -1,13 +1,6 @@
 import type AuthHolder from '../../domain/entity/auth/models/AuthHolder.tsx';
 import type AuthRepository from '../../domain/repository/auth/AuthRepository.tsx';
 
-/**
- * Обёртка над fetch, которая:
- *  - добавляет заголовок Authorization: Bearer <accessToken>, если пользователь вошёл;
- *  - заранее обновляет истёкший access-токен через refresh-токен;
- *  - при ответе 401 один раз пробует обновить токен и повторить запрос;
- *  - если обновить не удалось — разлогинивает пользователя.
- */
 export default class AuthorizedHttpClient {
     private refreshPromise: Promise<boolean> | null = null;
     private readonly authHolder: AuthHolder;
@@ -42,7 +35,6 @@ export default class AuthorizedHttpClient {
         return {...init, headers};
     }
 
-    /** Параллельные запросы используют одно и то же обновление токена */
     private refreshTokens(): Promise<boolean> {
         if (!this.refreshPromise) {
             this.refreshPromise = this.doRefresh().finally(() => {

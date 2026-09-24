@@ -2,7 +2,6 @@ import {useEffect, useReducer} from 'react';
 import type AuthViewModel from '../view-model/auth/AuthViewModel';
 import type BaseView from '../view/BaseView';
 
-/** Подписывает компонент на изменения AuthViewModel и перерисовывает его */
 export default function useAuthViewModel<T extends AuthViewModel>(authViewModel: T): T {
     const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 

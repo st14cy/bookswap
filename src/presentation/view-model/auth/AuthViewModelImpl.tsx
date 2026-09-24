@@ -45,7 +45,6 @@ export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
         this.syncWithAuthHolder();
     }
 
-    // === BaseViewModel ===
     public attachView = (baseView: BaseView): void => {
         this.views.add(baseView);
     };
@@ -55,13 +54,11 @@ export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
         else this.views.clear();
     };
 
-    // === AuthListener ===
     public onAuthChanged = (): void => {
         this.syncWithAuthHolder();
         this.notifyViewAboutChanges();
     };
 
-    // === Модалка ===
     public openAuthModal = (registerMode = false): void => {
         this.resetForm();
         this.isRegisterMode = registerMode;
@@ -83,7 +80,6 @@ export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
         this.notifyViewAboutChanges();
     };
 
-    // === Поля ===
     public onLoginQueryChanged = (value: string): void => {
         this.loginQuery = value;
         this.notifyViewAboutChanges();
@@ -109,7 +105,6 @@ export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
         this.notifyViewAboutChanges();
     };
 
-    // === Действия ===
     public onSubmit = (): Promise<void> =>
         this.isRegisterMode ? this.onClickRegister() : this.onClickSignIn();
 
@@ -149,7 +144,6 @@ export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
         await this.logoutUseCase.logoutUser();
     };
 
-    // === Вспомогательное ===
     private runWithLoading = async (action: () => Promise<void>, fallbackError: string): Promise<void> => {
         this.isLoading = true;
         this.clearError();

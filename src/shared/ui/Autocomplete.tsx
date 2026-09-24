@@ -122,7 +122,7 @@ function Autocomplete<T>({
                 break;
             case 'Enter':
                 if (activeIndex >= 0) {
-                    e.preventDefault(); // не отправлять форму
+                    e.preventDefault();
                     select(items[activeIndex]);
                 }
                 break;
@@ -172,7 +172,6 @@ function Autocomplete<T>({
                             role="option"
                             aria-selected={index === activeIndex}
                             className={`${styles.option} ${index === activeIndex ? styles.optionActive : ''}`}
-                            // mousedown вместо click: срабатывает раньше blur у поля
                             onMouseDown={(e) => { e.preventDefault(); select(item); }}
                             onMouseEnter={() => setActiveIndex(index)}
                         >

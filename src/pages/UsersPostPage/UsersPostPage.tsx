@@ -4,24 +4,21 @@ import PostUserListComponents from '../../presentation/view/post/PostUserListCom
 import PostUserListViewModelImpl
     from "../../presentation/view-model/post/get-list-by-user-id/PostUserListViewModelimpl";
 
-/**
- * «Мои объявления». Страница закрыта RequireAuth (routes.ts: requiresAuth),
- * поэтому сюда попадает только авторизованный пользователь.
- */
-const UsersPostPage: React.FC = () => {
-    const user = authHolder.getUser();
-    const userId = user?.id ?? '';
-
-    // Новый пользователь (перелогин) — новая модель и новая загрузка
+const UserPosts: React.FC<{ userName: string }> = ({ userName }) => {
     const viewModel = useMemo(
         () => new PostUserListViewModelImpl(getMyPostsUseCase, changePostPublicationUseCase, deletePostUseCase),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [userId],
+        [],
     );
 
+    return <PostUserListComponents viewModel={viewModel} userName={userName} />;
+};
+
+const UsersPostPage: React.FC = () => {
+    const user = authHolder.getUser();
+
     return (
-        <PostUserListComponents
-            viewModel={viewModel}
+        <UserPosts
+            key={user?.id ?? ''}
             userName={user ? (user.firstName || user.login) : ''}
         />
     );

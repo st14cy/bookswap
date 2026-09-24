@@ -59,6 +59,7 @@ const PostUserListComponents: React.FC<Props> = ({ viewModel, userName }) => {
                         name={post.bookTitle}
                         author={AuthorNameFormatter.short(post.authorName)}
                         location={post.city}
+                        likeCount={post.likeCount ?? 0}
                         imageSrc={post.coverUrl ?? undefined}
                         isActive={post.isActive}
                         isProcessing={viewModel.isProcessing(post.id)}
@@ -67,9 +68,6 @@ const PostUserListComponents: React.FC<Props> = ({ viewModel, userName }) => {
                         onTogglePublication={() => void (post.isActive
                             ? viewModel.onUnpublish(post.id)
                             : viewModel.onPublish(post.id))}
-                        // imageSrc={...}
-                        // likeCount={...}
-                        // viewCount={...}
                     />
                 ))}
             </ul>
@@ -143,7 +141,6 @@ const PostUserListComponents: React.FC<Props> = ({ viewModel, userName }) => {
                 </div>
             </div>
 
-            {/* Подтверждение удаления */}
             <Modal isOpen={viewModel.postPendingDelete !== null} onClose={viewModel.onCancelDelete}>
                 <div className="flex flex-col gap-24">
                     <Typography variant="h3" weight="bold">Удалить объявление?</Typography>

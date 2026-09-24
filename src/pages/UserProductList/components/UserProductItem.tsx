@@ -2,16 +2,6 @@ import React from 'react';
 import Button from "../../../shared/ui/Button.tsx";
 import Typography from "../../../shared/ui/Typography.tsx";
 
-//interface IUserProduct {
-//    name: string;
-//    imageSrc: string;
-//    author:string;
-//    location?:string;
-//    likeCount?:number;
-//    viewCount?:number;
-//
-//}
-
 interface IUserProduct {
     name?: string;
     imageSrc?: string;
@@ -19,15 +9,10 @@ interface IUserProduct {
     location?:string;
     likeCount?:number;
     viewCount?:number;
-    /** false — объявление в архиве */
     isActive?: boolean;
-    /** Снять с публикации / опубликовать снова */
     onTogglePublication?: () => void;
-    /** Идёт запрос — кнопка заблокирована */
     isProcessing?: boolean;
-    /** Переход к редактированию */
     onEdit?: () => void;
-    /** Удаление (с подтверждением) */
     onDelete?: () => void;
 }
 const UserProductItem:React.FC<IUserProduct> = ({

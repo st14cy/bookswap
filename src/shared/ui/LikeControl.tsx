@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
 
 
-const LikeControl: React.FC = () => {
-    const [liked, setLiked] = useState(false);
+interface LikeControlProps {
+    isLiked?: boolean;
+    onToggle?: () => void;
+    disabled?: boolean;
+}
+
+const LikeControl: React.FC<LikeControlProps> = ({ isLiked, onToggle, disabled = false }) => {
+    const [localLiked, setLocalLiked] = useState(false);
+    const liked = isLiked ?? localLiked;
+
+    const handleChange = () => {
+        if (onToggle) onToggle();
+        else setLocalLiked((v) => !v);
+    };
 
     return (
-        <label className={`
+        <label title={liked ? 'Убрать из избранного' : 'В избранное'} className={`
             w-46 h-46 
             bg-white rounded-full 
             absolute 
@@ -18,8 +30,11 @@ const LikeControl: React.FC = () => {
         `}>
             <input
                 type="checkbox"
+                className="visually-hidden"
+                aria-label={liked ? 'Убрать из избранного' : 'Добавить в избранное'}
                 checked={liked}
-                onChange={(e) => setLiked(e.target.checked)}/>
+                disabled={disabled}
+                onChange={handleChange}/>
             <HeartIcon    className="w-18 h-24" filled={liked} />
         </label>
     );

@@ -12,6 +12,5 @@ export interface UpdatePost {
     city: string;
     street: string;
     houseNumber: string;
-    /** Ссылка на обложку, null — убрать обложку */
     coverUrl?: string | null;
 }

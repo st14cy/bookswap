@@ -1,13 +1,8 @@
-/**
- * Достаёт понятное сообщение об ошибке из ответа ASP.NET API.
- * Поддерживает { message }, ProblemDetails ({ title, errors }) и простой текст.
- */
 export default async function readErrorMessage(response: Response): Promise<string> {
     let text = '';
     try {
         text = await response.text();
     } catch {
-        // ignore
     }
 
     if (text) {

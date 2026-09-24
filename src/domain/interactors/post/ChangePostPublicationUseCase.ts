@@ -1,7 +1,6 @@
 import type {PostRepository} from "../../repository/post/PostRepository.tsx";
 import type {Post} from "../../entity/post/models/Post.ts";
 
-/** Снять объявление с публикации (в архив) или вернуть его в публикацию */
 export default class ChangePostPublicationUseCase {
     private readonly postRepository: PostRepository;
 

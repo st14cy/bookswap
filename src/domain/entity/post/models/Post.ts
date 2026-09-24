@@ -15,8 +15,7 @@ export interface Post {
     ownerId: string;
     ownerName?: string;
     genreName?: string;
-    /** false — снято с публикации (в архиве) */
     isActive: boolean;
-    /** Ссылка на обложку книги (OpenLibrary), null — обложки нет */
     coverUrl?: string | null;
+    likeCount?: number;
 }

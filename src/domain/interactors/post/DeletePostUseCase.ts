@@ -1,6 +1,5 @@
 import type {PostRepository} from "../../repository/post/PostRepository.tsx";
 
-/** Удаление объявления */
 export default class DeletePostUseCase {
     private readonly postRepository: PostRepository;
 

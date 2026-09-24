@@ -12,6 +12,5 @@ export interface CreatePost {
     street: string;
     houseNumber: string;
     ownerId: string;
-    /** Ссылка на обложку из подсказок, null — без обложки */
     coverUrl?: string | null;
 }

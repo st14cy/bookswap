@@ -10,9 +10,6 @@ export default class LoginUseCase {
         this.authRepository = authRepository;
     }
 
-    /**
-     * @throws {Error} if credentials are not valid or have not passed
-     */
     public async loginUser(loginOrEmail: string, password: string): Promise<void> {
         const result = await this.authRepository.login(loginOrEmail.trim(), password);
         this.authHolder.onSignIn(result);

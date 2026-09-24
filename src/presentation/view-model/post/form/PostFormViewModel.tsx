@@ -1,4 +1,3 @@
-
 import type { Post } from '../../../../domain/entity/post/models/Post';
 import type BaseViewModel from "../../BaseViewModel.tsx";
 import type {BookSuggestion} from '../../../../domain/entity/book/BookSuggestion.ts';
@@ -17,7 +16,6 @@ export default interface PostFormViewModel extends BaseViewModel {
     city: string;
     street: string;
     houseNumber: string;
-    /** Обложка выбранной книги (из подсказок), null — без обложки */
     coverUrl: string | null;
 
     isLoading: boolean;
@@ -26,18 +24,15 @@ export default interface PostFormViewModel extends BaseViewModel {
     isEditMode: boolean;
     isSuccess: boolean;
 
-    // --- редактирование: загрузка объявления ---
     isPostLoading: boolean;
     postLoadError: string;
     loadPost: () => Promise<void>;
 
-    // --- жанры (из БД) ---
     genres: Genre[];
     isGenresLoading: boolean;
     genresError: string;
     loadGenres: () => Promise<void>;
 
-    // --- автозаполнение книги и автора ---
     suggestBookTitles: (query: string, signal: AbortSignal) => Promise<BookSuggestion[]>;
     suggestAuthors: (query: string, signal: AbortSignal) => Promise<BookSuggestion[]>;
     onSelectBookSuggestion: (suggestion: BookSuggestion) => void;

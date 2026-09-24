@@ -33,11 +33,11 @@ const Header: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-40">
-                    {/* Разделы только для авторизованных — гостю не показываем */}
                     {auth.isAuthorized && (
                         <div className="flex gap-40">
                             <Link to="/posts/new">+ разместить объявление</Link>
                             <Link to="/profile">мои объявления</Link>
+                            <Link to="/favorites">избранное</Link>
                         </div>
                     )}
 
@@ -49,13 +49,12 @@ const Header: React.FC = () => {
                                 </span>
                                 <Button onClick={() => {
                                     void auth.onClickSignOut();
-                                    navigate('/'); // со страниц «для своих» уходим в каталог
+                                    navigate('/');
                                 }}>Выйти</Button>
                             </>
                         ) : (
                             <Button onClick={() => auth.openAuthModal()}>Войти</Button>
                         )}
-                        {/* ... иконки ... */}
                     </div>
                 </div>
             </div>

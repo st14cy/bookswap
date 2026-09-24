@@ -2,21 +2,17 @@ import type BaseViewModel from '../BaseViewModel';
 import type BaseView from '../../view/BaseView';
 
 export default interface AuthViewModel extends BaseViewModel {
-    /** Несколько вьюх (шапка, модалка, защищённые страницы) могут слушать одну модель */
     detachView(baseView?: BaseView): void;
 
-    // --- состояние сессии ---
     isAuthorized: boolean;
     currentUserName: string;
 
-    // --- модалка ---
     isAuthModalOpen: boolean;
     isRegisterMode: boolean;
 
-    // --- поля формы ---
-    loginQuery: string;          // вход: логин или email; регистрация: логин
-    emailQuery: string;          // только регистрация
-    nameQuery: string;           // только регистрация (имя продавца, необязательно)
+    loginQuery: string;
+    emailQuery: string;
+    nameQuery: string;
     passwordQuery: string;
     confirmPasswordQuery: string;
 

@@ -4,6 +4,7 @@ import PostDetailsPage from "../../pages/PostDetailsPage/PostDetailsPage.tsx";
 import AddPostPage from "../../pages/AddPostPage/AddPostPage.tsx";
 import UsersPostPage from "../../pages/UsersPostPage/UsersPostPage.tsx";
 import EditPostPage from "../../pages/EditPostPage/EditPostPage.tsx";
+import FavoritesPage from "../../pages/FavoritesPage/FavoritesPage.tsx";
 
 export const ROUTES = {
     mainCatalog: {
@@ -25,6 +26,11 @@ export const ROUTES = {
         path: '/posts/:postId/edit',
         component: EditPostPage,
         title: 'Редактирование объявления',
+        requiresAuth: true },
+    favorites: {
+        path: '/favorites',
+        component: FavoritesPage,
+        title: 'Избранное',
         requiresAuth: true },
     usersPosts: {
         path: 'profile',

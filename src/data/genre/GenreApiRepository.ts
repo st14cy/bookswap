@@ -1,7 +1,6 @@
 import type GenreRepository from '../../domain/repository/genre/GenreRepository.ts';
 import type {Genre} from '../../domain/entity/genre/Genre.ts';
 
-/** Жанры из БД (api/Genre/getAll). Список кешируется — жанры меняются редко */
 export default class GenreApiRepository implements GenreRepository {
     private readonly baseUrl = `${import.meta.env.VITE_API_URL ?? ''}/api/Genre`;
     private cache: Promise<Genre[]> | null = null;
@@ -9,7 +8,7 @@ export default class GenreApiRepository implements GenreRepository {
     public getAll(): Promise<Genre[]> {
         if (!this.cache) {
             this.cache = this.load().catch((e) => {
-                this.cache = null; // при ошибке даём попробовать ещё раз
+                this.cache = null;
                 throw e;
             });
         }

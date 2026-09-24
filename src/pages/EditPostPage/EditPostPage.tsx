@@ -4,7 +4,6 @@ import PostFormViewModelImpl from "../../presentation/view-model/post/form/PostF
 import {authHolder, createPostUsecase, getGenresUseCase, getPostByIdUseCase, suggestBooksUseCase, updatePostUsecase} from "../../di.ts";
 import PostFormComponent from "../../presentation/view/post/PostFormComponent.tsx";
 
-/** Редактирование объявления: та же форма, что и при создании, но заполненная */
 const EditPostPage: React.FC = () => {
     const navigate = useNavigate();
     const { postId } = useParams<{ postId: string }>();

@@ -11,10 +11,6 @@ export default class RegisterUseCase {
         this.authHolder = authHolder;
     }
 
-    /**
-     * Регистрирует пользователя и сразу авторизует его
-     * @throws {Error} if registration has not passed
-     */
     public async registerUser(payload: RegisterPayload): Promise<void> {
         const result = await this.registerRepository.register({
             ...payload,

@@ -2,11 +2,6 @@ import type AuthRepository from '../../domain/repository/auth/AuthRepository';
 import type {RegisterPayload} from '../../domain/repository/auth/RegisterPayload.tsx';
 import type AuthorizationResult from '../../domain/entity/auth/structures/AuthorizationResult';
 
-/**
- * Фейковая реализация для работы без бэкенда.
- * Тестовый аккаунт: логин "user" (или user@email.com), пароль "password".
- * Чтобы включить — подставьте new AuthFakeApi() вместо new AuthApi() в di.ts.
- */
 export default class AuthFakeApi implements AuthRepository {
     public async login(loginOrEmail: string, password: string): Promise<AuthorizationResult> {
         const isKnownUser = loginOrEmail === 'user' || loginOrEmail === 'user@email.com';
@@ -28,7 +23,6 @@ export default class AuthFakeApi implements AuthRepository {
     }
 
     public async logout(): Promise<void> {
-        // nothing to do
     }
 
     private fakeResult(login: string, email: string, firstName?: string): AuthorizationResult {

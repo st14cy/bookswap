@@ -1,4 +1,3 @@
-// PostUserListViewModelImpl.tsx
 import type {Post} from "../../../../domain/entity/post/models/Post.ts";
 import type {PostUserListViewModel} from "./PostUserListViewModel.tsx";
 import type GetMyPostsUseCase from "../../../../domain/interactors/post/GetMyPostsUseCase.ts";
@@ -6,13 +5,11 @@ import type ChangePostPublicationUseCase from "../../../../domain/interactors/po
 import type DeletePostUseCase from "../../../../domain/interactors/post/DeletePostUseCase.ts";
 import type BaseView from "../../../view/BaseView.tsx";
 
-/** «Мои объявления»: объявления текущего авторизованного пользователя */
 export default class PostUserListViewModelImpl implements PostUserListViewModel {
     public posts: Post[] = [];
     public isLoading = false;
     public isShowError = false;
     public errorMessage = '';
-    /** Ошибка снятия с публикации / публикации (список при этом остаётся на экране) */
     public actionErrorMessage = '';
 
     public postPendingDelete: Post | null = null;
@@ -35,8 +32,6 @@ export default class PostUserListViewModelImpl implements PostUserListViewModel 
         this.deletePostUseCase = deletePostUseCase;
     }
 
-    // === Удаление ===
-    /** «Удалить» в карточке — сначала спрашиваем подтверждение */
     public onRequestDelete = (post: Post): void => {
         this.postPendingDelete = post;
         this.deleteErrorMessage = '';
@@ -44,7 +39,7 @@ export default class PostUserListViewModelImpl implements PostUserListViewModel 
     };
 
     public onCancelDelete = (): void => {
-        if (this.isDeleting) return; // пока идёт запрос, окно не закрываем
+        if (this.isDeleting) return;
         this.postPendingDelete = null;
         this.deleteErrorMessage = '';
         this.notifyViewAboutChanges();
@@ -80,11 +75,9 @@ export default class PostUserListViewModelImpl implements PostUserListViewModel 
 
     public isProcessing = (postId: string): boolean => this.processingIds.has(postId);
 
-    /** «Снять с публикации» — объявление уходит в архив */
     public onUnpublish = (postId: string): Promise<void> =>
         this.changePublication(postId, () => this.changePostPublicationUseCase.unpublish(postId));
 
-    /** «Опубликовать снова» — объявление возвращается из архива */
     public onPublish = (postId: string): Promise<void> =>
         this.changePublication(postId, () => this.changePostPublicationUseCase.publish(postId));
 
@@ -96,7 +89,6 @@ export default class PostUserListViewModelImpl implements PostUserListViewModel 
 
         try {
             const updated = await action();
-            // Сервер вернул актуальное объявление — заменяем его в списке
             this.posts = this.posts.map((p) => (p.id === postId ? {...p, isActive: updated.isActive} : p));
         } catch (e) {
             this.actionErrorMessage = e instanceof Error ? e.message : 'Не удалось изменить объявление';

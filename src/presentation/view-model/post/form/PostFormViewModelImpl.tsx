@@ -15,8 +15,8 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
     public authorName = '';
     public description = '';
     public bookTitle = '';
-    public genreId = '';           // GUID как строка, "" = не заполнено
-    public isNew = false;          // backend ждёт bool, не null
+    public genreId = '';
+    public isNew = false;
     public condition = '';
     public isForever = false;
     public isPostamat = false;
@@ -69,7 +69,6 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
     public attachView = (baseView: BaseView): void => { this.baseView = baseView; };
     public detachView = (): void => { this.baseView = undefined; };
 
-    /** Режим редактирования: загрузить объявление и заполнить форму */
     public loadPost = async (): Promise<void> => {
         if (!this.postId || this.isPostLoading) return;
         this.isPostLoading = true;
@@ -118,7 +117,6 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
     public onRemoveCover = (): void => { this.coverUrl = null; this.notifyViewAboutChanges(); };
     public onChangeHouseNumber = (v: string): void => { this.houseNumber = v; this.notifyViewAboutChanges(); };
 
-    // === Жанры ===
     public loadGenres = async (): Promise<void> => {
         if (this.isGenresLoading) return;
         this.isGenresLoading = true;
@@ -135,19 +133,15 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
         this.notifyViewAboutChanges();
     };
 
-    // === Автозаполнение ===
-    /** Книги по названию; если автор уже введён — только его книги */
     public suggestBookTitles = (query: string, signal: AbortSignal): Promise<BookSuggestion[]> =>
         this.suggestBooksUseCase.suggestTitles(query, this.authorName, signal);
 
     public suggestAuthors = (query: string, signal: AbortSignal): Promise<BookSuggestion[]> =>
         this.suggestBooksUseCase.suggestAuthors(query, signal);
 
-    /** Выбрана книга: подставляем название, автора и (если пусто) заголовок объявления */
     public onSelectBookSuggestion = (s: BookSuggestion): void => {
         this.bookTitle = s.title;
         if (s.author) this.authorName = s.author;
-        // Выбрана другая книга — берём её обложку (если у книги её нет, старую убираем)
         this.coverUrl = s.coverUrl ?? null;
         if (!this.title.trim()) this.title = s.title;
         this.notifyViewAboutChanges();
@@ -159,7 +153,6 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
     };
 
     public onSubmit = async (): Promise<void> => {
-        // Владелец объявления — текущий авторизованный пользователь
         const currentUser = this.authHolder.getUser();
         if (!currentUser) {
             this.errorMessage = 'Войдите в аккаунт, чтобы разместить объявление';
@@ -187,7 +180,6 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
             bookTitle: this.bookTitle,
             genreId: this.genreId,
             isNew: this.isNew,
-            // Отдельного поля «Состояние (текст)» больше нет — текст берём из радиокнопки
             condition: this.isNew ? 'Новое' : 'Б/у',
             isForever: this.isForever,
             isPostamat: this.isPostamat,

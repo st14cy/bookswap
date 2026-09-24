@@ -10,13 +10,11 @@ export default class LogoutUseCase {
         this.authHolder = authHolder;
     }
 
-    /** Выход никогда не падает: локальная сессия очищается в любом случае */
     public async logoutUser(): Promise<void> {
         if (!this.authHolder.isUserAuthorized()) return;
         try {
             await this.authRepository.logout(this.authHolder.getAuthToken());
         } catch {
-            // сервер недоступен или токен истёк — всё равно выходим локально
         } finally {
             this.authHolder.onSignOut();
         }

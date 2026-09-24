@@ -3,7 +3,6 @@ import type {RegisterPayload} from '../../domain/repository/auth/RegisterPayload
 import type AuthorizationResult from '../../domain/entity/auth/structures/AuthorizationResult';
 import readErrorMessage from '../http/readErrorMessage.ts';
 
-/** Ответ бэкенда (AuthResponseDto) */
 interface AuthResponseDto {
     accessToken: string;
     refreshToken: string;
@@ -19,7 +18,6 @@ interface AuthResponseDto {
     };
 }
 
-/** Реальная работа с AuthController бэкенда (api/Auth/...) */
 export default class AuthApi implements AuthRepository {
     private readonly baseUrl = `${import.meta.env.VITE_API_URL ?? ''}/api/Auth`;
 

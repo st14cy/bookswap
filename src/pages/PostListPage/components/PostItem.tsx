@@ -1,5 +1,5 @@
 import React from 'react';
-import LikeControl from "../../../shared/ui/LikeControl.tsx";
+import FavoriteButton from "../../../presentation/view/favorite/FavoriteButton.tsx";
 import {Link} from "react-router-dom";
 
 
@@ -8,7 +8,6 @@ interface ICatalogItemProps {
     name?: string;
     author?:string;
     location?:string;
-    /** Ссылка на обложку, null/undefined — серая заглушка */
     coverUrl?: string | null;
 }
 
@@ -28,7 +27,7 @@ const PostItem: React.FC<ICatalogItemProps>=({
               </Link>
 
               <div>
-               <LikeControl />
+               <FavoriteButton postId={id} />
               </div>
               <Link className='flex flex-col gap-4 items-center' to={`/post/${id}`}>
                   <h3 className='flex flex-row gap-10'>

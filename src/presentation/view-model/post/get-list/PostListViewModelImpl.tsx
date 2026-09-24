@@ -6,8 +6,7 @@ import type GetAllPostUseCase from "../../../../domain/interactors/post/GetAllPo
 export default class PostListViewModelImpl implements PostListViewModel {
     public  posts: Post[];
     public isLoading: boolean;
-    // @ts-ignore
-    errorMessage: string | null;
+    errorMessage: string;
     isShowError: boolean;
 
     private baseView?: BaseView;

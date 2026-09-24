@@ -7,15 +7,10 @@ const STORAGE_KEY = 'bookswap.auth';
 interface StoredSession {
     accessToken: string;
     refreshToken: string;
-    /** Момент истечения access-токена (ms since epoch) */
     accessTokenExpiresAt: number;
     user: AuthUser;
 }
 
-/**
- * Хранит состояние авторизации (токены + пользователь),
- * сохраняет его в localStorage и оповещает подписчиков об изменениях.
- */
 export default class AuthHolder {
     private authListeners: AuthListener[] = [];
     private session: StoredSession | null;
@@ -46,9 +41,6 @@ export default class AuthHolder {
         return this.session !== null;
     }
 
-    /**
-     * @throws {Error} if user is not authorized
-     */
     public getAuthToken(): string {
         if (!this.session) {
             throw new Error('User is not authorized');
@@ -64,7 +56,6 @@ export default class AuthHolder {
         return this.session?.user ?? null;
     }
 
-    /** true, если access-токен истёк или истечёт в ближайшие 30 секунд */
     public isAccessTokenExpired(): boolean {
         if (!this.session) return true;
         return Date.now() > this.session.accessTokenExpiresAt - 30_000;
@@ -91,7 +82,6 @@ export default class AuthHolder {
                 localStorage.removeItem(STORAGE_KEY);
             }
         } catch {
-            // localStorage недоступен (приватный режим и т.п.) — работаем только в памяти
         }
     }
 

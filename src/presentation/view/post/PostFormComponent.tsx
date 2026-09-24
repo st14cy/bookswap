@@ -71,7 +71,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-24 max-w-7xl mx-auto">
-            {/* Название */}
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold">Название объявления</Typography>
                 <Input
@@ -84,7 +83,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Название книги */}
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold" htmlFor="bookTitle">Название книги</Typography>
                 <Autocomplete<BookSuggestion>
@@ -101,7 +99,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Обложка */}
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold">Обложка</Typography>
                 {viewModel.coverUrl ? (
@@ -124,7 +121,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 )}
             </div>
 
-            {/* Состояние */}
             <div className="flex flex-col gap-14">
                 <Typography variant="h3" weight="bold">Состояние</Typography>
                 <RadioGroup
@@ -136,7 +132,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Автор */}
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold" htmlFor="authorName">Автор</Typography>
                 <Autocomplete<BookSuggestion>
@@ -153,7 +148,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Срок передачи */}
             <div className="flex flex-col gap-14">
                 <Typography variant="h3" weight="bold">Срок передачи</Typography>
                 <RadioGroup
@@ -165,7 +159,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Способ получения */}
             <div className="flex flex-col gap-14">
                 <Typography variant="h3" weight="bold">Способ получения</Typography>
                 <RadioGroup
@@ -177,7 +170,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Жанр */}
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold" htmlFor="genreId">Жанр</Typography>
                 <Combobox
@@ -193,7 +185,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Описание */}
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold">Описание</Typography>
                 <Input
@@ -206,7 +197,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Город */}
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold">Город</Typography>
                 <Input
@@ -219,7 +209,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Улица */}
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold">Улица</Typography>
                 <Input
@@ -232,7 +221,6 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Дом */}
             <div className="flex flex-col gap-14">
                 <Typography variant="label" weight="bold">Дом</Typography>
                 <Input
@@ -245,12 +233,10 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
-            {/* Ошибка */}
             {viewModel.isShowError && (
                 <div style={{ color: 'red' }}>{viewModel.errorMessage}</div>
             )}
 
-            {/* Кнопки */}
             <div className="flex flex-row gap-8">
                 <Button type="submit" variant="accent" disabled={viewModel.isLoading}>
                     {viewModel.isLoading

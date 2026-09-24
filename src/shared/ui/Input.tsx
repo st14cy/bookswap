@@ -9,7 +9,6 @@ interface InputProps {
     value?: string;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     style?: 'base' | 'search';
-    /** Текст скрытой подписи для скринридеров */
     label?: string;
     autoComplete?: string;
 }

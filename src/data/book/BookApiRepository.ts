@@ -1,7 +1,6 @@
 import type BookRepository from '../../domain/repository/book/BookRepository.ts';
 import type {BookSuggestion} from '../../domain/entity/book/BookSuggestion.ts';
 
-/** Подсказки из BooksController (api/Books/suggest), который ходит в OpenLibrary */
 export default class BookApiRepository implements BookRepository {
     private readonly baseUrl = `${import.meta.env.VITE_API_URL ?? ''}/api/Books`;
 

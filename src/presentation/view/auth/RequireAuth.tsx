@@ -8,7 +8,6 @@ interface Props {
     children: React.ReactNode;
 }
 
-/** Показывает содержимое только авторизованным пользователям */
 const RequireAuth: React.FC<Props> = ({authViewModel, children}) => {
     const vm = useAuthViewModel(authViewModel);
 
