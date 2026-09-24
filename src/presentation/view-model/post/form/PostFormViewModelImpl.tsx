@@ -23,6 +23,7 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
     public city = '';
     public street = '';
     public houseNumber = '';
+    public coverUrl: string | null = null;
 
     public isLoading = false;
     public isShowError = false;
@@ -99,6 +100,7 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
         this.city = post.city;
         this.street = post.street;
         this.houseNumber = post.houseNumber;
+        this.coverUrl = post.coverUrl ?? null;
         this.notifyViewAboutChanges();
     };
 
@@ -113,6 +115,7 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
     public onChangeIsPostamat = (v: boolean): void => { this.isPostamat = v; this.notifyViewAboutChanges(); };
     public onChangeCity = (v: string): void => { this.city = v; this.notifyViewAboutChanges(); };
     public onChangeStreet = (v: string): void => { this.street = v; this.notifyViewAboutChanges(); };
+    public onRemoveCover = (): void => { this.coverUrl = null; this.notifyViewAboutChanges(); };
     public onChangeHouseNumber = (v: string): void => { this.houseNumber = v; this.notifyViewAboutChanges(); };
 
     // === Жанры ===
@@ -144,6 +147,8 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
     public onSelectBookSuggestion = (s: BookSuggestion): void => {
         this.bookTitle = s.title;
         if (s.author) this.authorName = s.author;
+        // Выбрана другая книга — берём её обложку (если у книги её нет, старую убираем)
+        this.coverUrl = s.coverUrl ?? null;
         if (!this.title.trim()) this.title = s.title;
         this.notifyViewAboutChanges();
     };
@@ -189,6 +194,7 @@ export default class PostFormViewModelImpl implements PostFormViewModel {
             city: this.city,
             street: this.street,
             houseNumber: this.houseNumber,
+            coverUrl: this.coverUrl,
             ownerId: currentUser.id,
         };
 

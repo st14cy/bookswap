@@ -122,6 +122,8 @@ export default class PostApiRepository{
             city: dto.city,
             street: dto.street,
             houseNumber: dto.houseNumber,
+            // пустая строка — сервер уберёт обложку
+            coverUrl: dto.coverUrl ?? '',
         };
     }
 
@@ -146,6 +148,7 @@ export default class PostApiRepository{
 
             street: dto.street,
             houseNumber: dto.houseNumber,
+            coverUrl: dto.coverUrl ?? null,
         };
 
         if (dto.ownerId && dto.ownerId.trim().length > 0) {
@@ -174,6 +177,7 @@ export default class PostApiRepository{
             ownerId: item.ownerId,
             ownerName: item.ownerName,
             isActive: item.isActive ?? true,
+            coverUrl: item.coverUrl ?? null,
         };
     }
 }

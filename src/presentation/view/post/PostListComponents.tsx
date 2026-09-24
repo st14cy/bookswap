@@ -3,6 +3,7 @@ import Typography from '../../../shared/ui/Typography';
 import type PostListViewModelImpl from '../../view-model/post/get-list/PostListViewModelImpl';
 import type BaseView from '../BaseView';
 import PostItem from '../../../pages/PostListPage/components/PostItem.tsx';
+import AuthorNameFormatter from '../../util/AuthorNameFormatter.ts';
 
 interface Props {
     viewModel: PostListViewModelImpl;
@@ -37,7 +38,8 @@ const PostListComponents: React.FC<Props> = ({ viewModel }) => {
                             key={post.id}
                             id={post.id}
                             name={post.bookTitle}
-                            author={post.authorName}
+                            author={AuthorNameFormatter.short(post.authorName)}
+                            coverUrl={post.coverUrl}
                             location="—"
                         />
                     ))}

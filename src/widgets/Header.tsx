@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation, matchPath } from 'react-router-dom';
+import { Link, useLocation, useNavigate, matchPath } from 'react-router-dom';
 import Typography from '../shared/ui/Typography';
 import { ROUTES } from '../shared/config/routes';
 import Button from '../shared/ui/Button';
@@ -8,6 +8,7 @@ import useAuthViewModel from '../presentation/hooks/useAuthViewModel';
 
 const Header: React.FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [pageTitle, setPageTitle] = useState('Каталог');
     const auth = useAuthViewModel(authViewModel);
 
@@ -32,10 +33,13 @@ const Header: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-40">
-                    <div className="flex gap-40">
-                        <Link to="/posts/new">+ разместить объявление</Link>
-                        <Link to="/profile">мои объявления</Link>
-                    </div>
+                    {/* Разделы только для авторизованных — гостю не показываем */}
+                    {auth.isAuthorized && (
+                        <div className="flex gap-40">
+                            <Link to="/posts/new">+ разместить объявление</Link>
+                            <Link to="/profile">мои объявления</Link>
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-20">
                         {auth.isAuthorized ? (
@@ -43,7 +47,10 @@ const Header: React.FC = () => {
                                 <span className="font-bold" title="Вы вошли в аккаунт">
                                     {auth.currentUserName}
                                 </span>
-                                <Button onClick={() => void auth.onClickSignOut()}>Выйти</Button>
+                                <Button onClick={() => {
+                                    void auth.onClickSignOut();
+                                    navigate('/'); // со страниц «для своих» уходим в каталог
+                                }}>Выйти</Button>
                             </>
                         ) : (
                             <Button onClick={() => auth.openAuthModal()}>Войти</Button>

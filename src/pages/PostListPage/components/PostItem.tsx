@@ -8,18 +8,23 @@ interface ICatalogItemProps {
     name?: string;
     author?:string;
     location?:string;
+    /** Ссылка на обложку, null/undefined — серая заглушка */
+    coverUrl?: string | null;
 }
 
 const PostItem: React.FC<ICatalogItemProps>=({
     id,
     name='Название',
     author='Автор',
-    location='Неизвестно',})=>{
+    location='Неизвестно',
+    coverUrl,})=>{
     return (
       <li>
           <article className="relative">
               <Link to={`/post/${id}`}>
-                 <img src='#' width='260' height='250' className='bg-gray rounded-20'  alt='Изображение книги'/>
+                 {coverUrl
+                     ? <img src={coverUrl} width='260' height='250' className='w-[260px] h-[250px] object-cover bg-gray rounded-20' alt={`Обложка книги «${name}»`} loading='lazy'/>
+                     : <div className='w-[260px] h-[250px] bg-gray rounded-20' role='img' aria-label='Обложки нет'/>}
               </Link>
 
               <div>

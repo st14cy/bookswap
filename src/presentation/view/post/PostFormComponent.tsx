@@ -101,6 +101,29 @@ const PostFormComponent: React.FC<Props> = ({ viewModel, onSuccess }) => {
                 />
             </div>
 
+            {/* Обложка */}
+            <div className="flex flex-col gap-14">
+                <Typography variant="label" weight="bold">Обложка</Typography>
+                {viewModel.coverUrl ? (
+                    <div className="flex items-end gap-24">
+                        <img
+                            src={viewModel.coverUrl}
+                            alt={`Обложка книги «${viewModel.bookTitle}»`}
+                            width={120}
+                            height={180}
+                            className="w-[120px] h-[180px] object-cover rounded-12 bg-gray"
+                        />
+                        <Button type="button" onClick={viewModel.onRemoveCover}>
+                            Убрать обложку
+                        </Button>
+                    </div>
+                ) : (
+                    <Typography className="text-black/60">
+                        Обложка подставится автоматически, когда вы выберете книгу из подсказок
+                    </Typography>
+                )}
+            </div>
+
             {/* Состояние */}
             <div className="flex flex-col gap-14">
                 <Typography variant="h3" weight="bold">Состояние</Typography>

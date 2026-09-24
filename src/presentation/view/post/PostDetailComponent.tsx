@@ -33,7 +33,12 @@ const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
         <div className="grid grid-cols-2 gap-100">
             <div className="flex flex-col gap-[24px]">
                 <section className="relative">
-                    <img src="#" alt={`Фотография ${viewModel.post.bookTitle}`} width="550" height="480"/>
+                    {viewModel.post.coverUrl
+                        ? <img src={viewModel.post.coverUrl}
+                               alt={`Обложка книги «${viewModel.post.bookTitle}»`}
+                               width="550" height="480"
+                               className="w-[550px] h-[480px] object-contain bg-gray rounded-20"/>
+                        : <div className="w-[550px] h-[480px] bg-gray rounded-20" role="img" aria-label="Обложки нет"/>}
                     <LikeControl/>
                 </section>
                 <div className="flex flex-col gap-14">
@@ -46,7 +51,7 @@ const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
                                 weight="bold">Характеристика</Typography>
                     <ul className="flex flex-col gap-14">
                         <InfoBlock title="Автор" children={viewModel.post.authorName}/>
-                        <InfoBlock title="Жанр" children={viewModel.post.genreId}/>
+                        <InfoBlock title="Жанр" children={viewModel.post.genreName || 'Не указан'}/>
                     </ul>
                 </div>
 

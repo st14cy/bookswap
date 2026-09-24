@@ -44,10 +44,14 @@ const UserProductItem:React.FC<IUserProduct> = ({
                                                     onDelete}) => {
     return (
     <li>
-        <img src={imageSrc}
-             width='250'
-             height='250'
-             alt={`Обложка книги «${name}»`} />
+        {imageSrc
+            ? <img src={imageSrc}
+                   width='250'
+                   height='250'
+                   className='w-[250px] h-[250px] object-cover bg-gray rounded-20'
+                   loading='lazy'
+                   alt={`Обложка книги «${name}»`} />
+            : <div className='w-[250px] h-[250px] bg-gray rounded-20' role='img' aria-label='Обложки нет'/>}
 
         <div className="grid grid-cols-2 grid-rows-2">
             <Typography variant='h3' weight='bold'>{name}</Typography>

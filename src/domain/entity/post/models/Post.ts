@@ -17,4 +17,6 @@ export interface Post {
     genreName?: string;
     /** false — снято с публикации (в архиве) */
     isActive: boolean;
+    /** Ссылка на обложку книги (OpenLibrary), null — обложки нет */
+    coverUrl?: string | null;
 }

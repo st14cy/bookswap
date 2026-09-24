@@ -17,6 +17,8 @@ export default interface PostFormViewModel extends BaseViewModel {
     city: string;
     street: string;
     houseNumber: string;
+    /** Обложка выбранной книги (из подсказок), null — без обложки */
+    coverUrl: string | null;
 
     isLoading: boolean;
     isShowError: boolean;
@@ -53,6 +55,7 @@ export default interface PostFormViewModel extends BaseViewModel {
     onChangeCity: (v: string) => void;
     onChangeStreet: (v: string) => void;
     onChangeHouseNumber: (v: string) => void;
+    onRemoveCover: () => void;
 
     initFromPost: (post: Post) => void;
     onSubmit: () => Promise<void>;

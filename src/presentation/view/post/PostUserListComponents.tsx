@@ -7,6 +7,7 @@ import Typography from "../../../shared/ui/Typography.tsx";
 import UserProductItem from "../../../pages/UserProductList/components/UserProductItem.tsx";
 import Modal from "../../../shared/ui/modal/Modal.tsx";
 import Button from "../../../shared/ui/Button.tsx";
+import AuthorNameFormatter from "../../util/AuthorNameFormatter.ts";
 
 interface Props {
     viewModel: PostUserListViewModelimpl;
@@ -56,8 +57,9 @@ const PostUserListComponents: React.FC<Props> = ({ viewModel, userName }) => {
                     <UserProductItem
                         key={post.id}
                         name={post.bookTitle}
-                        author={post.authorName}
+                        author={AuthorNameFormatter.short(post.authorName)}
                         location={post.city}
+                        imageSrc={post.coverUrl ?? undefined}
                         isActive={post.isActive}
                         isProcessing={viewModel.isProcessing(post.id)}
                         onEdit={() => navigate(`/posts/${post.id}/edit`)}
