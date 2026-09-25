@@ -8,6 +8,7 @@ import AuthViewModelImpl from './presentation/view-model/auth/AuthViewModelImpl'
 
 import PostApiRepository from './data/post/PostApiRepository';
 import GetAllPostUseCase from './domain/interactors/post/GetAllPostUseCase';
+import SearchPostsUseCase from './domain/interactors/post/SearchPostsUseCase';
 import GetPostByIdUseCase from './domain/interactors/post/GetPostByIdUseCase';
 import GetAllByUserIdUseCase from "./domain/interactors/post/GetAllByUserIdUseCase.tsx";
 import UpdatePostUseCase from "./domain/interactors/post/UpdatePostUseCase.tsx";
@@ -49,6 +50,7 @@ export const registerUseCase = new RegisterUseCase(authRepository, authHolder);
 export const logoutUseCase = new LogoutUseCase(authRepository, authHolder);
 
 export const getAllPostsUseCase = new GetAllPostUseCase(postRepository);
+export const searchPostsUseCase = new SearchPostsUseCase(postRepository);
 export const getPostByIdUseCase = new GetPostByIdUseCase(postRepository);
 export const getPostsByUserUseCase = new GetAllByUserIdUseCase(postRepository);
 export const getMyPostsUseCase = new GetMyPostsUseCase(postRepository);

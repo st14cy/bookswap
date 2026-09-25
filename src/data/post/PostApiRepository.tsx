@@ -19,6 +19,13 @@ export default class PostApiRepository{
         const  data = await response.json();
         return data.map(this.mapToEntity)
     }
+    async search(query: string): Promise<Post[]> {
+        const response = await fetch(`${this.baseUrl}/api/Advertisement/search?query=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error(`Не удалось выполнить поиск (${response.status})`);
+        const data = await response.json();
+        return data.map(this.mapToEntity);
+    }
+
     async  getById(id: string):Promise<Post>{
         const  response = await fetch(`${this.baseUrl}/api/Advertisement/getById/${id}`)
         if(!response.ok) throw new Error(`Failed to fetch one post:${response.status}`);

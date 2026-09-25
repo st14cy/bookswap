@@ -4,6 +4,7 @@ import type {UpdatePost} from "../../entity/post/models/UpdatePost.ts";
 
 export  interface  PostRepository{
     getAll(): Promise<Post[]>;
+    search(query: string): Promise<Post[]>;
     getById(id:string): Promise<Post>;
     getListByUserId(id:string): Promise<Post[]>;
     getMy(): Promise<Post[]>;

@@ -4,4 +4,8 @@ import type BaseViewModel from "../../BaseViewModel.tsx";
 export default interface PostListViewModel extends BaseViewModel{
     posts: Post[];
     onLoadPosts:()=>Promise<void>;
+    searchQuery: string;
+    appliedQuery: string;
+    onChangeSearchQuery: (query: string) => void;
+    onSearch: () => Promise<void>;
 }

@@ -26,21 +26,24 @@ const PostListComponents: React.FC<Props> = ({ viewModel }) => {
         return () => viewModel.detachView();
     }, [baseView, viewModel]);
 
-    if (viewModel.isLoading) return <div>Загрузка...</div>;
-    if (viewModel.isShowError)
-        return <div style={{ color: 'red' }}>{viewModel.errorMessage}</div>;
-    if (viewModel.posts.length === 0) return <div>Постов нет</div>;
-
-    return (
-        <div >
-            <div className="flex flex-col items-center bg-background-dark w-full  pt-[40px] mb-[60px]">
-                <div className="flex w-full flex-col items-center justify-center max-w-7xl">
-                    <SearchBar></SearchBar>
-                    <img src={categoryImage} alt="books"/>
-                </div>
-
-            </div>
-            <ul className="grid grid-cols-[repeat(auto-fill,260px)] justify-center gap-[60px] w-full max-w-7xl mx-auto pb-4">
+    const renderPosts = () => {
+        if (viewModel.isLoading && viewModel.posts.length === 0) {
+            return <Typography className="block text-center">Загрузка...</Typography>;
+        }
+        if (viewModel.isShowError) {
+            return <div role="alert" className="text-center text-accent">{viewModel.errorMessage}</div>;
+        }
+        if (viewModel.posts.length === 0) {
+            return (
+                <Typography className="block text-center">
+                    {viewModel.appliedQuery
+                        ? `По запросу «${viewModel.appliedQuery}» ничего не найдено`
+                        : 'Постов нет'}
+                </Typography>
+            );
+        }
+        return (
+            <ul className={`grid grid-cols-[repeat(auto-fill,260px)] justify-center gap-[60px] w-full max-w-7xl mx-auto pb-4 transition-opacity ${viewModel.isLoading ? 'opacity-50' : ''}`}>
                 {viewModel.posts.map((post) => (
                     <PostItem
                         key={post.id}
@@ -52,6 +55,23 @@ const PostListComponents: React.FC<Props> = ({ viewModel }) => {
                     />
                 ))}
             </ul>
+        );
+    };
+
+    return (
+        <div >
+            <div className="flex flex-col items-center bg-background-dark w-full  pt-[40px] mb-[60px]">
+                <div className="flex w-full flex-col items-center justify-center max-w-7xl">
+                    <SearchBar
+                        value={viewModel.searchQuery}
+                        onChange={viewModel.onChangeSearchQuery}
+                        onSubmit={() => void viewModel.onSearch()}
+                    />
+                    <img src={categoryImage} alt="books"/>
+                </div>
+
+            </div>
+            {renderPosts()}
 
         </div>
     );
