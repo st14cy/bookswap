@@ -1,71 +1,73 @@
 import React, {useEffect} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {favoritesViewModel} from '../../di.ts';
 import useFavoritesViewModel from '../../presentation/hooks/useFavoritesViewModel.ts';
 import AuthorNameFormatter from '../../presentation/util/AuthorNameFormatter.ts';
+import Typography from '../../shared/ui/Typography.tsx';
+import Button from '../../shared/ui/Button.tsx';
+import FavoriteItem from './components/FavoriteItem.tsx';
+
+const styles = {
+    page: 'w-full max-w-7xl mx-auto mt-[60px] flex flex-col gap-24',
+    list: 'flex flex-col gap-24',
+    error: 'text-accent',
+    link: 'text-blue',
+};
 
 const FavoritesPage: React.FC = () => {
     const vm = useFavoritesViewModel(favoritesViewModel);
+    const navigate = useNavigate();
 
     useEffect(() => {
         void vm.loadPosts();
     }, [vm]);
 
     if (vm.isPostsLoading && vm.posts.length === 0) {
-        return <p>Загрузка...</p>;
+        return (
+            <section className={styles.page}>
+                <Typography>Загрузка...</Typography>
+            </section>
+        );
     }
 
     if (vm.postsErrorMessage) {
         return (
-            <section>
-                <p role="alert">{vm.postsErrorMessage}</p>
-                <button type="button" onClick={() => void vm.loadPosts()}>Повторить</button>
+            <section className={styles.page}>
+                <div role="alert" className={styles.error}>{vm.postsErrorMessage}</div>
+                <div>
+                    <Button onClick={() => void vm.loadPosts()}>Повторить</Button>
+                </div>
             </section>
         );
     }
 
     if (vm.posts.length === 0) {
         return (
-            <section>
-                <p>В избранном пока пусто</p>
-                <Link to="/">Перейти в каталог</Link>
+            <section className={styles.page}>
+                <Typography>В избранном пока пусто</Typography>
+                <Link to="/" className={styles.link}>Перейти в каталог</Link>
             </section>
         );
     }
 
     return (
-        <section>
-            <h2>Избранное ({vm.posts.length})</h2>
+        <section className={styles.page}>
+            {vm.actionErrorMessage && <div role="alert" className={styles.error}>{vm.actionErrorMessage}</div>}
 
-            {vm.actionErrorMessage && <p role="alert">{vm.actionErrorMessage}</p>}
-
-            <ul>
+            <ul className={styles.list}>
                 {vm.posts.map((post) => (
-                    <li key={post.id}>
-                        <article>
-                            <Link to={`/post/${post.id}`}>
-                                {post.coverUrl && (
-                                    <img
-                                        src={post.coverUrl}
-                                        alt={`Обложка книги «${post.bookTitle}»`}
-                                        width={120}
-                                        height={180}
-                                    />
-                                )}
-                                <h3>{post.bookTitle}</h3>
-                            </Link>
-                            <p>{AuthorNameFormatter.short(post.authorName)}</p>
-                            {post.genreName && <p>{post.genreName}</p>}
-                            <p>{post.city}</p>
-                            <button
-                                type="button"
-                                disabled={vm.isPending(post.id)}
-                                onClick={() => void vm.toggle(post.id)}
-                            >
-                                Убрать из избранного
-                            </button>
-                        </article>
-                    </li>
+                    <FavoriteItem
+                        key={post.id}
+                        name={post.bookTitle}
+                        author={AuthorNameFormatter.short(post.authorName)}
+                        genre={post.genreName || undefined}
+                        location={post.city}
+                        imageSrc={post.coverUrl ?? undefined}
+                        isAvailable={post.isActive}
+                        isProcessing={vm.isPending(post.id)}
+                        onOpen={() => navigate(`/post/${post.id}`)}
+                        onRemove={() => void vm.toggle(post.id)}
+                    />
                 ))}
             </ul>
         </section>

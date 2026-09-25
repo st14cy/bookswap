@@ -15,6 +15,17 @@ interface IUserProduct {
     onEdit?: () => void;
     onDelete?: () => void;
 }
+
+const styles = {
+    item: 'flex w-full items-center justify-between gap-24',
+    info: 'flex min-w-0 flex-1 items-center gap-14',
+    cover: 'w-[250px] h-[250px] shrink-0 object-cover bg-gray rounded-20',
+    text: 'flex min-w-0 flex-col gap-8',
+    actions: 'flex w-[220px] shrink-0 flex-col gap-14',
+    stats: 'flex flex-col gap-4 text-sm',
+    button: 'w-full py-12! px-16! text-sm',
+};
+
 const UserProductItem:React.FC<IUserProduct> = ({
                                                     name,
                                                     imageSrc,
@@ -28,24 +39,26 @@ const UserProductItem:React.FC<IUserProduct> = ({
                                                     onEdit,
                                                     onDelete}) => {
     return (
-    <li>
-        {imageSrc
-            ? <img src={imageSrc}
-                   width='250'
-                   height='250'
-                   className='w-[250px] h-[250px] object-cover bg-gray rounded-20'
-                   loading='lazy'
-                   alt={`Обложка книги «${name}»`} />
-            : <div className='w-[250px] h-[250px] bg-gray rounded-20' role='img' aria-label='Обложки нет'/>}
+    <li className={styles.item}>
+        <div className={styles.info}>
+            {imageSrc
+                ? <img src={imageSrc}
+                       width='250'
+                       height='250'
+                       className={styles.cover}
+                       loading='lazy'
+                       alt={`Обложка книги «${name}»`} />
+                : <div className={styles.cover} role='img' aria-label='Обложки нет'/>}
 
-        <div className="grid grid-cols-2 grid-rows-2">
-            <Typography variant='h3' weight='bold'>{name}</Typography>
-            <Typography>{author}</Typography>
-            <Typography className="col-span-2">{location}</Typography>
+            <div className={styles.text}>
+                <Typography variant='h3' weight='bold'>{name}</Typography>
+                <Typography>{author}</Typography>
+                <Typography>{location}</Typography>
+            </div>
         </div>
 
-        <div>
-            <dl className="flex flex-wrap gap-4 text-sm">
+        <div className={styles.actions}>
+            <dl className={styles.stats}>
                 <div className="flex gap-1">
                     <dt>Лайки:</dt>
                     <dd>{likeCount}</dd>
@@ -56,19 +69,19 @@ const UserProductItem:React.FC<IUserProduct> = ({
                     <dd>{viewCount}</dd>
                 </div>
             </dl>
-            <div >
-                <Button
-                    variant={isActive ? 'primary' : 'accent'}
-                    onClick={onTogglePublication}
-                    disabled={isProcessing || !onTogglePublication}
-                >
-                    {isProcessing
-                        ? 'Подождите…'
-                        : isActive ? 'Снять с публикации' : 'Опубликовать снова'}
-                </Button>
-                <Button onClick={onEdit} disabled={!onEdit}>Редактировать</Button>
-                <Button onClick={onDelete} disabled={isProcessing || !onDelete}>Удалить</Button>
-            </div>
+
+            <Button
+                className={styles.button}
+                variant={isActive ? 'primary' : 'accent'}
+                onClick={onTogglePublication}
+                disabled={isProcessing || !onTogglePublication}
+            >
+                {isProcessing
+                    ? 'Подождите…'
+                    : isActive ? 'Снять с публикации' : 'Опубликовать снова'}
+            </Button>
+            <Button className={styles.button} onClick={onEdit} disabled={!onEdit}>Редактировать</Button>
+            <Button className={styles.button} onClick={onDelete} disabled={isProcessing || !onDelete}>Удалить</Button>
         </div>
     </li>
     );

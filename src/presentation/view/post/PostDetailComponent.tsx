@@ -35,7 +35,7 @@ const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
     if (viewModel.isShowError) return <div style={{ color: 'red' }}>{viewModel.errorMessage}</div>;
     if (!viewModel.post) return <div>Пост не найден</div>;
     return (
-        <div className="grid grid-cols-2 gap-100">
+        <div className="grid grid-cols-2 gap-100 mt-[60px] mx-auto max-w-7xl">
             <div className="flex flex-col gap-[24px]">
                 <section className="relative">
                     {viewModel.post.coverUrl

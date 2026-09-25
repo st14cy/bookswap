@@ -11,7 +11,7 @@ const UserPosts: React.FC<{ userName: string }> = ({ userName }) => {
     );
     return(
         <div className="w-full max-w-7xl mx-auto">
-            <div className="flex flex-col items-start w-full max-w-[776px]">
+            <div className="flex flex-col w-full">
                 <PostUserListComponents viewModel={viewModel} userName={userName} />
             </div>
         </div>)

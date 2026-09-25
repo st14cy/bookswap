@@ -138,3 +138,36 @@ body {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
 }
+
+@layer base {
+    a,
+    button {
+        transition: color 0.2s ease, background-color 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--color-accent);
+        filter: brightness(1.1);
+    }
+
+    a:active {
+        opacity: 0.7;
+    }
+
+    button:not(:disabled) {
+        cursor: pointer;
+    }
+
+    button:not(:disabled):hover {
+        filter: brightness(1.1);
+    }
+
+    button:not(:disabled):active {
+        filter: brightness(0.85);
+    }
+
+    button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+}

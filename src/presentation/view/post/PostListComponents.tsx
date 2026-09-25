@@ -48,7 +48,7 @@ const PostListComponents: React.FC<Props> = ({ viewModel }) => {
                         name={post.bookTitle}
                         author={AuthorNameFormatter.short(post.authorName)}
                         coverUrl={post.coverUrl}
-                        location="—"
+                        location={post.city || 'Неизвестно'}
                     />
                 ))}
             </ul>

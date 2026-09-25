@@ -74,33 +74,8 @@ const PostUserListComponents: React.FC<Props> = ({ viewModel, userName }) => {
         );
     };
 
-    const showCounts = !viewModel.isLoading && !viewModel.isShowError;
-
     return (
-        <div className="flex flex-col gap-6">
-            <header className="flex flex-col items-center gap-3">
-                <img
-                    src="#"
-                    height={130}
-                    width={130}
-                    className="h-[130px] w-[130px] rounded-full object-cover"
-                    alt="Фото пользователя"
-                />
-
-                {userName && <Typography variant="h2" weight="bold">{userName}</Typography>}
-
-                <div
-                    className="flex items-center gap-2"
-                    aria-label="Рейтинг: 3 из 5"
-                >
-                    <Typography>3,0</Typography>
-
-                    <span aria-hidden="true" className="text-yellow-500">
-                        ★★★☆☆
-                    </span>
-                </div>
-            </header>
-
+        <div className="flex w-full flex-col gap-6 mt-[60px]">
             <div className="flex flex-col gap-24">
                 <div role="tablist" className="flex gap-8">
                     <button
@@ -110,7 +85,7 @@ const PostUserListComponents: React.FC<Props> = ({ viewModel, userName }) => {
                         className={`${styles.tab} ${tab === 'active' ? styles.tabActive : styles.tabInactive}`}
                         onClick={() => setTab('active')}
                     >
-                        Активные{showCounts ? ` (${viewModel.activePosts.length})` : ''}
+                        Активные
                     </button>
                     <button
                         type="button"
@@ -119,7 +94,7 @@ const PostUserListComponents: React.FC<Props> = ({ viewModel, userName }) => {
                         className={`${styles.tab} ${tab === 'archive' ? styles.tabActive : styles.tabInactive}`}
                         onClick={() => setTab('archive')}
                     >
-                        Архив{showCounts ? ` (${viewModel.archivedPosts.length})` : ''}
+                        Архив
                     </button>
                 </div>
 
@@ -147,7 +122,6 @@ const PostUserListComponents: React.FC<Props> = ({ viewModel, userName }) => {
                     <Typography>
                         «{viewModel.postPendingDelete?.bookTitle || viewModel.postPendingDelete?.title}» будет удалено.
                         Это действие нельзя отменить.
-                        {viewModel.postPendingDelete?.isActive && ' Если хотите убрать его временно — снимите с публикации.'}
                     </Typography>
 
                     {viewModel.deleteErrorMessage && (

@@ -21,7 +21,7 @@ const LikeControl: React.FC<LikeControlProps> = ({ isLiked, onToggle, disabled =
             w-46 h-46 
             bg-white rounded-full 
             absolute 
-            right-4 bottom-10  
+            right-4 bottom-[-15px]  
             flex items-center justify-center 
             cursor-pointer
             shadow-lg hover:shadow-xl 

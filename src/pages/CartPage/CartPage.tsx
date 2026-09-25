@@ -1,11 +1,23 @@
 import React, {useEffect} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {cartViewModel} from '../../di.ts';
 import useCartViewModel from '../../presentation/hooks/useCartViewModel.ts';
 import AuthorNameFormatter from '../../presentation/util/AuthorNameFormatter.ts';
+import Typography from '../../shared/ui/Typography.tsx';
+import Button from '../../shared/ui/Button.tsx';
+import CartItem from './components/CartItem.tsx';
+
+const styles = {
+    page: 'w-full max-w-7xl mx-auto mt-[60px] flex flex-col gap-24',
+    list: 'flex flex-col gap-24',
+    footer: 'flex items-center justify-end gap-24',
+    error: 'text-accent',
+    link: 'text-blue',
+};
 
 const CartPage: React.FC = () => {
     const vm = useCartViewModel(cartViewModel);
+    const navigate = useNavigate();
 
     useEffect(() => {
         void vm.loadItems();
@@ -13,88 +25,70 @@ const CartPage: React.FC = () => {
 
     if (vm.lastOrder) {
         return (
-            <section>
-                <h2>Заказ оформлен</h2>
-                <p>Номер заказа: {vm.lastOrder.id}</p>
-                <ul>
-                    {vm.lastOrder.items.map((item) => (
-                        <li key={item.advertisementId}>
-                            {item.bookTitle} — {AuthorNameFormatter.short(item.author)}
-                        </li>
-                    ))}
-                </ul>
-                <Link to="/">Вернуться в каталог</Link>
+
+            <section className={styles.page}>
+                <Typography variant="h2" weight="bold">Заказ оформлен</Typography>
+                <Link to="/" className={styles.link}>Вернуться в каталог</Link>
             </section>
         );
     }
 
     if (vm.isItemsLoading && vm.items.length === 0) {
-        return <p>Загрузка...</p>;
+        return (
+            <section className={styles.page}>
+                <Typography>Загрузка...</Typography>
+            </section>
+        );
     }
 
     if (vm.itemsErrorMessage) {
         return (
-            <section>
-                <p role="alert">{vm.itemsErrorMessage}</p>
-                <button type="button" onClick={() => void vm.loadItems()}>Повторить</button>
+            <section className={styles.page}>
+                <div role="alert" className={styles.error}>{vm.itemsErrorMessage}</div>
+                <div>
+                    <Button onClick={() => void vm.loadItems()}>Повторить</Button>
+                </div>
             </section>
         );
     }
 
     if (vm.items.length === 0) {
         return (
-            <section>
-                <p>Корзина пуста</p>
-                <Link to="/">Перейти в каталог</Link>
+            <section className={styles.page}>
+                <Typography>Корзина пуста</Typography>
+                <Link to="/" className={styles.link}>Перейти в каталог</Link>
             </section>
         );
     }
 
     return (
-        <section>
-            <h2>Корзина ({vm.items.length})</h2>
+        <section className={styles.page}>
+            {vm.actionErrorMessage && <div role="alert" className={styles.error}>{vm.actionErrorMessage}</div>}
 
-            {vm.actionErrorMessage && <p role="alert">{vm.actionErrorMessage}</p>}
-
-            <ul>
+            <ul className={styles.list}>
                 {vm.items.map(({post}) => (
-                    <li key={post.id}>
-                        <article>
-                            <Link to={`/post/${post.id}`}>
-                                {post.coverUrl && (
-                                    <img
-                                        src={post.coverUrl}
-                                        alt={`Обложка книги «${post.bookTitle}»`}
-                                        width={120}
-                                        height={180}
-                                    />
-                                )}
-                                <h3>{post.bookTitle}</h3>
-                            </Link>
-                            <p>{AuthorNameFormatter.short(post.authorName)}</p>
-                            <p>{post.city}</p>
-                            {!post.isActive && <p>Книга уже недоступна</p>}
-                            <button
-                                type="button"
-                                disabled={vm.isPending(post.id) || vm.isCheckingOut}
-                                onClick={() => void vm.remove(post.id)}
-                            >
-                                Убрать из корзины
-                            </button>
-                        </article>
-                    </li>
+                    <CartItem
+                        key={post.id}
+                        name={post.bookTitle}
+                        author={AuthorNameFormatter.short(post.authorName)}
+                        location={post.city}
+                        imageSrc={post.coverUrl ?? undefined}
+                        isAvailable={post.isActive}
+                        isProcessing={vm.isPending(post.id) || vm.isCheckingOut}
+                        onOpen={() => navigate(`/post/${post.id}`)}
+                        onRemove={() => void vm.remove(post.id)}
+                    />
                 ))}
             </ul>
 
-            {vm.checkoutErrorMessage && <p role="alert">{vm.checkoutErrorMessage}</p>}
+            {vm.checkoutErrorMessage && <div role="alert" className={styles.error}>{vm.checkoutErrorMessage}</div>}
 
-            <button
-                type="button"
-                disabled={vm.isCheckingOut}
-                onClick={() => void vm.checkout()}
-            >
-                {vm.isCheckingOut ? 'Оформление...' : 'Оформить'}
-            </button>
+            <div className={styles.footer}>
+                <Typography variant="h4">Книг в корзине: {vm.items.length}</Typography>
+                <Button variant="accent" onClick={() => void vm.checkout()} disabled={vm.isCheckingOut}>
+                    {vm.isCheckingOut ? 'Оформление...' : 'Оформить'}
+                </Button>
+            </div>
         </section>
     );
 };
