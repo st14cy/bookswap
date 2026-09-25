@@ -5,6 +5,8 @@ import AddPostPage from "../../pages/AddPostPage/AddPostPage.tsx";
 import UsersPostPage from "../../pages/UsersPostPage/UsersPostPage.tsx";
 import EditPostPage from "../../pages/EditPostPage/EditPostPage.tsx";
 import FavoritesPage from "../../pages/FavoritesPage/FavoritesPage.tsx";
+import CartPage from "../../pages/CartPage/CartPage.tsx";
+import NotificationsPage from "../../pages/NotificationsPage/NotificationsPage.tsx";
 
 export const ROUTES = {
     mainCatalog: {
@@ -31,6 +33,16 @@ export const ROUTES = {
         path: '/favorites',
         component: FavoritesPage,
         title: 'Избранное',
+        requiresAuth: true },
+    cart: {
+        path: '/cart',
+        component: CartPage,
+        title: 'Корзина',
+        requiresAuth: true },
+    notifications: {
+        path: '/notifications',
+        component: NotificationsPage,
+        title: 'Уведомления',
         requiresAuth: true },
     usersPosts: {
         path: 'profile',

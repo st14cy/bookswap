@@ -28,6 +28,14 @@ import FavoritesViewModelImpl from './presentation/view-model/favorite/Favorites
 import SellerApiRepository from './data/seller/SellerApiRepository';
 import GetSellerUseCase from './domain/interactors/seller/GetSellerUseCase';
 
+import CartApiRepository from './data/cart/CartApiRepository';
+import CartUseCase from './domain/interactors/cart/CartUseCase';
+import CartViewModelImpl from './presentation/view-model/cart/CartViewModelImpl';
+
+import NotificationApiRepository from './data/notification/NotificationApiRepository';
+import NotificationsUseCase from './domain/interactors/notification/NotificationsUseCase';
+import NotificationsViewModelImpl from './presentation/view-model/notification/NotificationsViewModelImpl';
+
 export const authHolder = new AuthHolder();
 
 const authRepository = new AuthApi();
@@ -60,3 +68,11 @@ export const favoritesViewModel = new FavoritesViewModelImpl(favoritesUseCase, a
 
 const sellerRepository = new SellerApiRepository();
 export const getSellerUseCase = new GetSellerUseCase(sellerRepository);
+
+const cartRepository = new CartApiRepository(httpClient);
+export const cartUseCase = new CartUseCase(cartRepository);
+export const cartViewModel = new CartViewModelImpl(cartUseCase, authHolder, authViewModel);
+
+const notificationRepository = new NotificationApiRepository(httpClient);
+export const notificationsUseCase = new NotificationsUseCase(notificationRepository);
+export const notificationsViewModel = new NotificationsViewModelImpl(notificationsUseCase, authHolder);

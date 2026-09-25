@@ -6,6 +6,9 @@ import Typography from "../../../shared/ui/Typography.tsx";
 import InfoBlock from "../../../pages/PostListPage/components/InfoBlock.tsx";
 import Button from "../../../shared/ui/Button.tsx";
 import SellerProfile from "../../../pages/PostDetailsPage/components/SellerProfile.tsx";
+import {useNavigate} from "react-router-dom";
+import {cartViewModel} from "../../../di.ts";
+import useCartViewModel from "../../hooks/useCartViewModel.ts";
 
 interface Props {
     viewModel: PostDetailViewModelImpl;
@@ -15,6 +18,8 @@ interface Props {
 
 const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
     const [, forceUpdate] = useState(0);
+    const cart = useCartViewModel(cartViewModel);
+    const navigate = useNavigate();
 
     const baseView: BaseView = {
         onViewModelChanged: () => forceUpdate((n) => n + 1),
@@ -68,7 +73,22 @@ const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
 
             </div>
             <div className="flex flex-col gap-14 max-w-[380px]">
-                <Button  variant='accent'>Забрать книгу</Button>
+                {cart.isInCart(viewModel.post.id) ? (
+                    <Button variant='accent' onClick={() => navigate('/cart')}>В корзине — перейти</Button>
+                ) : (
+                    <Button
+                        variant='accent'
+                        disabled={cart.isPending(viewModel.post.id) || !viewModel.post.isActive}
+                        onClick={() => void cart.add(viewModel.post!.id)}
+                    >
+                        {!viewModel.post.isActive
+                            ? 'Книгу уже забрали'
+                            : cart.isPending(viewModel.post.id) ? 'Добавляем...' : 'Забрать книгу'}
+                    </Button>
+                )}
+                {cart.actionErrorPostId === viewModel.post.id && cart.actionErrorMessage && (
+                    <p role="alert" className="text-accent">{cart.actionErrorMessage}</p>
+                )}
                 <SellerProfile sellerId={viewModel.post.ownerId}/>
                 <Button variant='primary'>Написать</Button>
             </div>
