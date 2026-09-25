@@ -25,6 +25,9 @@ import FavoriteApiRepository from './data/favorite/FavoriteApiRepository';
 import FavoritesUseCase from './domain/interactors/favorite/FavoritesUseCase';
 import FavoritesViewModelImpl from './presentation/view-model/favorite/FavoritesViewModelImpl';
 
+import SellerApiRepository from './data/seller/SellerApiRepository';
+import GetSellerUseCase from './domain/interactors/seller/GetSellerUseCase';
+
 export const authHolder = new AuthHolder();
 
 const authRepository = new AuthApi();
@@ -54,3 +57,6 @@ export const authViewModel = new AuthViewModelImpl(loginUseCase, registerUseCase
 const favoriteRepository = new FavoriteApiRepository(httpClient);
 export const favoritesUseCase = new FavoritesUseCase(favoriteRepository);
 export const favoritesViewModel = new FavoritesViewModelImpl(favoritesUseCase, authHolder, authViewModel);
+
+const sellerRepository = new SellerApiRepository();
+export const getSellerUseCase = new GetSellerUseCase(sellerRepository);

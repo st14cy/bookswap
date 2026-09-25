@@ -69,7 +69,7 @@ const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
             </div>
             <div className="flex flex-col gap-14 max-w-[380px]">
                 <Button  variant='accent'>Забрать книгу</Button>
-                <SellerProfile/>
+                <SellerProfile sellerId={viewModel.post.ownerId}/>
                 <Button variant='primary'>Написать</Button>
             </div>
 
