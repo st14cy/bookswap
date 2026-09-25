@@ -34,13 +34,13 @@ const PostListComponents: React.FC<Props> = ({ viewModel }) => {
     return (
         <div >
             <div className="flex flex-col items-center bg-background-dark w-full  pt-[40px] mb-[60px]">
-                <div className="flex flex-col items-center justify-center max-w-7xl">
+                <div className="flex w-full flex-col items-center justify-center max-w-7xl">
                     <SearchBar></SearchBar>
                     <img src={categoryImage} alt="books"/>
                 </div>
 
             </div>
-            <ul className="grid grid-cols-4 gap-60 w-full max-w-7xl mx-auto pb-4">
+            <ul className="grid grid-cols-[repeat(auto-fill,260px)] justify-center gap-[60px] w-full max-w-7xl mx-auto pb-4">
                 {viewModel.posts.map((post) => (
                     <PostItem
                         key={post.id}

@@ -27,7 +27,7 @@ const Input: React.FC<InputProps> = ({
                                      }) => {
     const styles = {
         base: 'bg-gray rounded-12 py-22 px-20 text-16 placeholder:text-16',
-        search: 'bg-transparent px-36 focus:outline-none focus:ring-0 focus:shadow-none text-16 placeholder:text-16',
+        search: 'min-w-0 flex-1 bg-transparent px-36 focus:outline-none focus:ring-0 focus:shadow-none text-16 placeholder:text-16',
     };
 
     return (
