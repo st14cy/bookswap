@@ -10,9 +10,9 @@ import {authViewModel} from "./di";
 function App() {
   return (
       <BrowserRouter>
-          <div className="px-4 sm:px-6 lg:px-8">
+          <div className="min-h-screen flex flex-col px-4 sm:px-6 lg:px-8">
               <Header/>
-              <main>
+              <main className="flex-1">
                   <Routes>
                       {Object.entries(ROUTES).map(([key, route]) => {
                           const Component = route.component;

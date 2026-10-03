@@ -10,6 +10,9 @@ import {useNavigate} from "react-router-dom";
 import {cartViewModel} from "../../../di.ts";
 import useCartViewModel from "../../hooks/useCartViewModel.ts";
 
+const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString('ru-RU', {day: 'numeric', month: 'long', year: 'numeric'});
+
 interface Props {
     viewModel: PostDetailViewModelImpl;
     postId: string;
@@ -63,12 +66,15 @@ const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
                 <div className="flex flex-col gap-14">
                     <Typography variant='h3'
                                 weight="bold">Местоположение</Typography>
-                    <Typography variant='span'>{`${viewModel.post.city},${viewModel.post.street}, ${viewModel.post.houseNumber}`}</Typography>
+                    <Typography variant='span'>
+                        {[viewModel.post.city, viewModel.post.street, viewModel.post.houseNumber].filter(Boolean).join(', ') || 'Не указано'}
+                    </Typography>
 
 
                 </div>
-                <div>
-                    <Typography variant='span'>{`${viewModel.post.id},${viewModel.post}, ${viewModel.post} просмотра`}</Typography>
+                <div className="flex flex-wrap gap-x-24 gap-y-[4px] text-sm opacity-60">
+                    <span>Объявление № {viewModel.post.id.slice(0, 8).toUpperCase()}</span>
+                    {viewModel.post.createdAt && <span>Размещено {formatDate(viewModel.post.createdAt)}</span>}
                 </div>
 
             </div>
@@ -90,7 +96,6 @@ const PostDetailComponent: React.FC<Props> = ({viewModel, postId}) => {
                     <p role="alert" className="text-accent">{cart.actionErrorMessage}</p>
                 )}
                 <SellerProfile sellerId={viewModel.post.ownerId}/>
-                <Button variant='primary'>Написать</Button>
             </div>
 
         </div>

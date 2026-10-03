@@ -20,6 +20,7 @@ export interface PostDto {
     isActive?: boolean;
     coverUrl?: string | null;
     likeCount?: number;
+    createdAt?: string;
 }
 
 export default function mapPostDto(item: PostDto): Post {
@@ -43,5 +44,6 @@ export default function mapPostDto(item: PostDto): Post {
         isActive: item.isActive ?? true,
         coverUrl: item.coverUrl ?? null,
         likeCount: item.likeCount ?? 0,
+        createdAt: item.createdAt,
     };
 }

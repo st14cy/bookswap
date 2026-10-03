@@ -18,4 +18,5 @@ export interface Post {
     isActive: boolean;
     coverUrl?: string | null;
     likeCount?: number;
+    createdAt?: string;
 }
