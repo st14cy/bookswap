@@ -10,6 +10,7 @@ import FormValidator from '../../util/FormValidator';
 export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
     public isAuthorized = false;
     public currentUserName = '';
+    public isAdmin = false;
 
     public isAuthModalOpen = false;
     public isRegisterMode = false;
@@ -164,6 +165,7 @@ export default class AuthViewModelImpl implements AuthViewModel, AuthListener {
         const user = this.authHolder.getUser();
         this.isAuthorized = this.authHolder.isUserAuthorized();
         this.currentUserName = user ? (user.firstName || user.login) : '';
+        this.isAdmin = this.isAuthorized && (Number(user?.role) === 1 || String(user?.role) === 'Admin');
     };
 
     private validateLoginForm = (): boolean => {

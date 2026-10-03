@@ -10,6 +10,7 @@ export  interface  PostRepository{
     getMy(): Promise<Post[]>;
     setActive(id: string, isActive: boolean): Promise<Post>;
     delete(id: string): Promise<void>;
+    adminDelete(id: string): Promise<void>;
     create(post: CreatePost): Promise<Post>;
     update(post: UpdatePost): Promise<Post>;
 }

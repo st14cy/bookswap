@@ -25,8 +25,9 @@ const Header: React.FC = () => {
                 break;
             }
         }
+        if (auth.isAdmin && location.pathname === ROUTES.mainCatalog.path) foundTitle = 'Панель администратора';
         setPageTitle(foundTitle);
-    }, [location.pathname]);
+    }, [location.pathname, auth.isAdmin]);
 
     return (
         <header className="relative z-10 -mb-[6px] flex items-center justify-center pt-[56px]">

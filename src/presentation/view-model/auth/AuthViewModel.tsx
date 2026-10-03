@@ -6,6 +6,7 @@ export default interface AuthViewModel extends BaseViewModel {
 
     isAuthorized: boolean;
     currentUserName: string;
+    isAdmin: boolean;
 
     isAuthModalOpen: boolean;
     isRegisterMode: boolean;

@@ -64,6 +64,22 @@ export default class PostApiRepository{
         return this.mapToEntity(await response.json());
     }
 
+    async adminDelete(id: string): Promise<void> {
+        const response = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/admin/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            let message = 'Не удалось удалить объявление';
+            try {
+                const data = await response.json();
+                if (data && typeof data.message === 'string') message = data.message;
+            } catch {
+                message = response.status === 403 ? 'Действие доступно только администратору' : message;
+            }
+            throw new Error(message);
+        }
+    }
+
     async delete(id: string): Promise<void> {
         const response = await this.httpClient.fetch(`${this.baseUrl}/api/Advertisement/${id}`, {
             method: 'DELETE',

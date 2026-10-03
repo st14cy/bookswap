@@ -16,6 +16,7 @@ import CreatePostUseCase from "./domain/interactors/post/CreateNewPostUseCase";
 import GetMyPostsUseCase from "./domain/interactors/post/GetMyPostsUseCase";
 import ChangePostPublicationUseCase from "./domain/interactors/post/ChangePostPublicationUseCase";
 import DeletePostUseCase from "./domain/interactors/post/DeletePostUseCase";
+import AdminDeletePostUseCase from "./domain/interactors/post/AdminDeletePostUseCase";
 
 import BookApiRepository from './data/book/BookApiRepository';
 import GenreApiRepository from './data/genre/GenreApiRepository';
@@ -56,6 +57,7 @@ export const getPostsByUserUseCase = new GetAllByUserIdUseCase(postRepository);
 export const getMyPostsUseCase = new GetMyPostsUseCase(postRepository);
 export const changePostPublicationUseCase = new ChangePostPublicationUseCase(postRepository);
 export const deletePostUseCase = new DeletePostUseCase(postRepository);
+export const adminDeletePostUseCase = new AdminDeletePostUseCase(postRepository);
 export const createPostUsecase = new CreatePostUseCase(postRepository);
 export const updatePostUsecase = new UpdatePostUseCase(postRepository);
 
